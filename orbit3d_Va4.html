@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <title>Orbit Simulation Console</title>
+
+   <style>
+/* =========================================================
+      4. RETRO NASA CLASSIC (APOLLO SPACECRAFT STYLE)
+========================================================= */
+#topBar {
+     position: fixed;
+     top: 0; left: 0;
+     width: 100%;
+     box-sizing: border-box;
+     background: #2b3036;
+     border-bottom: 3px solid #707780;
+     padding: 8px 12px;
+     gap: 12px;
+     align-items: center;
+     display: flex;
+     flex-wrap: wrap;
+     z-index: 3000;
+     font-family: 'Consolas', 'Courier New', monospace;
+     box-shadow: inset 0 2px 0 rgba(255,255,255,0.2), 0 4px 15px rgba(0,0,0,0.6);
+}
+
+.section {
+     display: flex;
+     align-items: center;
+     gap: 8px;
+     padding: 4px 12px;
+     height: 30px;
+     box-sizing: border-box;
+     background: #1e2226;
+     border: 1px solid #485058;
+     border-radius: 2px;
+     box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+}
+.section.vertical { flex-direction: row; height: 30px; }
+
+#topBar label, #topBar span, #topBar div {
+     color: #55ffdd !important;
+     font-size: 11px;
+     font-weight: bold;
+     text-shadow: 0 0 3px rgba(85,255,221,0.5);
+     letter-spacing: 0.5px;
+}
+
+#topBar button {
+     background: linear-gradient(180deg, #485058 0%, #2b3036 100%);
+     border-top: 1px solid #68727c;
+     border-bottom: 2px solid #15181b;
+     border-left: 1px solid #383e44;
+     border-right: 1px solid #383e44;
+     color: #e0e5eb;
+     border-radius: 1px;
+     padding: 1px 10px;
+     font-size: 10px;
+     font-weight: bold;
+     cursor: pointer;
+     height: 22px;
+     line-height: 18px;
+     text-shadow: 0 -1px 0 rgba(0,0,0,0.5);
+}
+#topBar button:hover {
+     background: #505963;
+     color: #ffffff;
+}
+
+#topBar button.toggle-on,
+#topBar button.active {
+     background: linear-gradient(180deg, #ff7700 0%, #b34400 100%) !important;
+     border-color: #ffaa55 !important;
+     color: #ffffff !important;
+     box-shadow: 0 0 10px rgba(255, 119, 0, 0.6) !important;
+     text-shadow: 0 0 4px #fff;
+}
+
+/* 👑 【原点回帰】他の通常ボタンと全く同じ立体デザインを維持し、発光だけを完全に消灯する */
+#topBar button.toggle-off,
+#presetPanel button.toggle-off {
+     /* 💥 漆黒背景も18pxもインセットもすべてパージ！ */
+     /* 🎨 デフォルトボタン（#topBar button）と100%同じ背景グラデーションと立体枠線を強制復旧 */
+     background: linear-gradient(180deg, #485058 0%, #2b3036 100%) !important;
+     border-top: 1px solid #68727c !important;
+     border-bottom: 2px solid #15181b !important;
+     border-left: 1px solid #383e44 !important;
+     border-right: 1px solid #383e44 !important;
+     color: #e0e5eb !important; /* 文字も他の通常ボタンと同じ綺麗な薄グレー */
+
+     /* 高さや文字サイズも通常ボタンの規律に完全同期 */
+     height: 22px !important;
+     line-height: 18px !important;
+     padding: 1px 10px !important;
+     font-size: 10px !important;
+     font-weight: bold !important;
+     text-shadow: 0 -1px 0 rgba(0,0,0,0.5) !important;
+
+     /* ✨ オン時の烈火のオレンジ発光（box-shadow / text-shadow）だけを、冷徹に「無し」にする */
+     box-shadow: none !important;
+
+     transition: all 0.2s ease;
+}
+
+/* 🕹️ 通常ボタンと同じホバー規律も完全にシンクロ */
+#topBar {
+     position: fixed;
+     top: 0; left: 0;
+     width: 100%;
+     box-sizing: border-box;
+     background: #2b3036;
+     border-bottom: 3px solid #707780;
+     padding: 8px 12px;
+     gap: 12px;
+     align-items: center;
+     display: flex;
+     flex-wrap: wrap;
+     z-index: 3000;
+     font-family: 'Consolas', 'Courier New', monospace;
+     box-shadow: inset 0 2px 0 rgba(255,255,255,0.2), 0 4px 15px rgba(0,0,0,0.6);
+}
+
+.section {
+     display: flex;
+     align-items: center;
+     gap: 8px;
+     padding: 4px 12px;
+     height: 30px;
+     box-sizing: border-box;
+     background: #1e2226;
+     border: 1px solid #485058;
+     border-radius: 2px;
+     box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+}
+.section.vertical { flex-direction: row; height: 30px; }
+
+#topBar label, #topBar span, #topBar div {
+     color: #55ffdd !important;
+     font-size: 11px;
+     font-weight: bold;
+     text-shadow: 0 0 3px rgba(85,255,221,0.5);
+     letter-spacing: 0.5px;
+}
+
+#topBar button {
+     background: linear-gradient(180deg, #485058 0%, #2b3036 100%);
+     border-top: 1px solid #68727c;
+     border-bottom: 2px solid #15181b;
+     border-left: 1px solid #383e44;
+     border-right: 1px solid #383e44;
+     color: #e0e5eb;
+     border-radius: 1px;
+     padding: 1px 10px;
+     font-size: 10px;
+     font-weight: bold;
+     cursor: pointer;
+     height: 22px;
+     line-height: 18px;
+     text-shadow: 0 -1px 0 rgba(0,0,0,0.5);
+}
+#topBar button:hover {
+     background: #505963;
+     color: #ffffff;
+}
+
+#topBar button.toggle-on,
+#topBar button.active {
+     background: linear-gradient(180deg, #ff7700 0%, #b34400 100%) !important;
+     border-color: #ffaa55 !important;
+     color: #ffffff !important;
+     box-shadow: 0 0 10px rgba(255, 119, 0, 0.6) !important;
+     text-shadow: 0 0 4px #fff;
+}
+
+/* 👑 【原点回帰】トグルオフ規律 */
+#topBar button.toggle-off,
+#presetPanel button.toggle-off {
+     background: linear-gradient(180deg, #485058 0%, #2b3036 100%) !important;
+     border-top: 1px solid #68727c !important;
+     border-bottom: 2px solid #15181b !important;
+     border-left: 1px solid #383e44 !important;
+     border-right: 1px solid #383e44 !important;
+     color: #e0e5eb !important;
+     height: 22px !important;
+     line-height: 18px !important;
+     padding: 1px 10px !important;
+     font-size: 10px !important;
+     font-weight: bold !important;
+     text-shadow: 0 -1px 0 rgba(0,0,0,0.5) !important;
+     box-shadow: none !important;
+     transition: all 0.2s ease;
+}
+#topBar button.toggle-off:hover,
+#presetPanel button.toggle-off:hover {
+     background: #505963 !important;
+     color: #ffffff !important;
+}
+
+#topBar input[type="range"] {
+     -webkit-appearance: none;
+     appearance: none;
+     background: #101214;
+     height: 4px;
+     width: 90px;
+     vertical-align: middle;
+     margin: 0 4px;
+}
+#topBar input[type="range"]::-webkit-slider-thumb {
+     -webkit-appearance: none;
+     background: #d0d5dd;
+     border: 1px solid #485058;
+     width: 8px;
+     height: 14px;
+     border-radius: 1px;
+     cursor: pointer;
+     box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+#topBar input[type="number"],
+#topBar select {
+     background: #0b0d0e;
+     border: 1px solid #485058;
+     color: #ff9900;
+     font-family: 'Consolas', monospace;
+     font-size: 10px;
+     height: 18px; /* 基本設定 */
+     text-align: center;
+     box-shadow: inset 0 1px 3px rgba(0,0,0,0.9);
+}
+
+/* =========================================================
+  * 👑 コックピット統合変形：3段階ステージ属性制御（残党完全駆逐版）
+  * ========================================================= */
+.settings-panel {
+     background: #1e2226 !important;
+     border-top: 2px solid #485058 !important;
+     margin-top: 5px;
+     padding: 8px;
+     gap: 10px;
+     width: 100%;
+     box-shadow: inset 0 3px 10px rgba(0,0,0,0.8);
+     flex-wrap: wrap;
+}
+
+/* 🚨 古い .settings-panel.open { display: flex !important; } はここに書いてあっても完全に消去（除霊）すること！ */
+
+/* Stage 0: 完全隠蔽（5万個の純粋深宇宙観測モード） */
+.settings-panel[data-stage="0"] {
+     display: none !important;
+}
+
+/* Stage 1 & 2: 属性を最優先（!important）にしてパネル基本進出を強制執行 */
+.settings-panel[data-stage="1"],
+.settings-panel[data-stage="2"] {
+     display: flex !important;
+}
+
+/* Stage 1（基本設定のみ表示）：詳細星界ブロックの表示を最優先で『徹底遮断』 */
+.settings-panel[data-stage="1"] #sunControlBlock {
+     display: none !important;
+}
+
+/* Stage 2（特権演算全開放）：隠されていた心臓部を解放し、他行と一斉直列アライメント */
+.settings-panel[data-stage="2"] #sunControlBlock {
+     display: block !important;
+     width: 100%;
+}
+
+
+/* GUIDANCE MONITOR STYLE */
+.help-monitor {
+     display: flex;
+     align-items: center;
+     min-width: 320px;
+     flex: 1;
+     height: 30px;
+     padding: 4px 12px;
+     box-sizing: border-box;
+     background: #101214;
+     border: 1px solid #ff9900;
+     border-radius: 2px;
+     box-shadow: inset 0 0 8px rgba(255,153,0,0.3);
+}
+#helpText {
+     color: #ff9900 !important;
+     font-family: 'Consolas', monospace;
+     font-size: 11px;
+     text-shadow: 0 0 4px rgba(255,153,0,0.6);
+     transition: color 0.2s;
+}
+
+
+canvas {
+     display: block;
+     position: fixed;
+     top: 0; left: 0;
+     width: 100vw;
+     height: 100vh;
+     z-index: 1;
+     background: #000;
+}
+
+/* 👑 コントロール行の整流化（1ライン化） */
+.speed-control-line {
+     display: flex;
+     gap: 8px;
+     align-items: center;
+     width: 100%;
+}
+.speed-control-line input[type="range"] {
+     flex: 1;
+     cursor: pointer;
+}
+
+/* 👑 新設：4連物理数式グリッドの整流化セクター */
+.grid-4way-line {
+     display: flex;
+     gap: 6px;
+     align-items: center;
+     width: 100%;
+}
+.grid-4way-line label {
+     width: 60px; /* RANGE: ラベルの幅を固定し他行と同期 */
+}
+.grid-4way-line .math-gate {
+     font-family: monospace;
+     font-size: 12px;
+     color: #ff8800; /* 烈火のオレンジ発光ゲート */
+     padding: 0 2px;
+}
+.grid-4way-line .split-bar {
+     color: #444;
+     font-weight: bold;
+     padding: 0 6px;
+}
+
+/* 👑 共通規律：全詳細パラメータ行の入力・ダミー枠のサイズ・高さを「24px」へ完全統治 */
+.speed-control-line input[type="number"],
+.speed-control-line .circuit-filler,
+.grid-4way-line input[type="number"] {
+     width: 65px !important;       /* 幅65pxの絶対防衛ライン */
+     height: 24px !important;      /* 高さを24pxに引き上げ、縦のガタつきを完全現行犯逮捕 */
+     text-align: right;
+     box-sizing: border-box;
+     background: #0b0d0e;
+     border: 1px solid #485058;
+     color: #ff9900;
+     font-family: 'Consolas', monospace;
+     font-size: 10px;
+     box-shadow: inset 0 1px 3px rgba(0,0,0,0.9);
+}
+
+/* 擬態インジケーター（TRLの末端）専用調整 */
+.speed-control-line .circuit-filler {
+     text-align: center !important;
+     background: #222;
+     border: 1px solid #444;
+     color: #ff8800;
+     font-family: monospace;
+     font-size: 11px;
+     line-height: 22px;
+     cursor: not-allowed;
+}
+
+
+   </style>
+</head>
+
+<body>
+
+<div id="topBar">
+
+   <button id="toggleLangBtn">
+     Language: EN
+   </button>
+
+   <div class="section">
+     <button id="toggleSettingsBtn" data-stage="0" type="button"
+             data-en="SYS: OFF" data-ja="システム: 全閉"
+             data-help-en="SYSTEM COCKPIT TOGGLE: Cycles through Stage 0 (Close), Stage 1 (Basic Panel), and Stage 2 (Advanced Engine Panel)."
+             data-help-ja="システム操作盤トグル：Stage 0（全閉）、Stage 1（基本設定）、Stage 2（特権演算全開放）を順番に切り替えます。">SYS: OFF</button>
+   </div>
+
+   <div class="section vertical">
+     <button id="startBtn" class="toggle-on" data-en="RUN (Q)" data-ja="稼働 (Q)" data-help-en="SIMULATION TOGGLE: Starts or pauses cosmic time progression." data-help-ja="シミュレーション操作：時間の進行（稼働）と一時停止を交互に切り替えます。">RUN (Q)</button>
+     <button id="resetBtn" data-en="Reset (E)" data-ja="リセット (E)" data-help-en="SYSTEM RESET: Regenerates the universe with current parameters." data-help-ja="システムリセット：現在のパラメータに基づいて、宇宙を初期状態から再生成します。">Reset (E)</button>
+   </div>
+
+   <div id="presetPanel">
+     <button id="presetStableBtn" data-en="Stable Orbit" data-ja="安定軌道" data-help-en="STABLE ORBIT: Calibrates initial tangent velocity vectors to achieve perfectly balanced Keplerian circular/elliptical orbits." data-help-ja="安定軌道プリセット：すべての天体に完璧な公転速度を与え、調和のとれた美しいケプラー軌道を構築します。">Stable Orbit</button>
+     <button id="presetChaosBtn" data-en="Chaos Collapse" data-ja="カオス崩壊" data-help-en="CHAOS COLLAPSE: Injects high-density body clusters with irregular velocity deltas to simulate unpredictable gravitational turbulence." data-help-ja="カオス崩壊プリセット：過密な天体配置と不規則な初速度により、予測不能な重力乱舞と衝突崩壊を引き起こします。">Chaos Collapse</button>
+     <button id="presetScatterBtn" data-en="Scatter Test" data-ja="散乱テスト" data-help-en="SCATTER TEST: Directs object streams on a collision course with the core star to analyze high-velocity gravitational slingshot vectors." data-help-ja="散乱テストプリセット：中心星に向かって天体群を直線的に突入させ、スイングバイ（重力散乱）の挙動を観測します。">Scatter Test</button>
+     <button id="presetRenderBtn" data-en="Render Load" data-ja="描画高負荷テスト" data-help-en="RENDER LOAD: Spawns maximum entity counts instantly to benchmark graphical pipelines and stress-test core N-body computation limits." data-help-ja="描画高負荷テスト：セクター内の天体数を瞬間的に極限まで引き上げ、グラフィックレンダリングの限界性能を測定します。">Render Load</button>
+
+     <button id="btnOrbitCam" class="toggle-off"
+             data-en="ORBIT" data-ja="周回"
+             data-help-en="CAMERA ROTATION TOGGLE: Activates smooth automatic orbital camera rotation locked onto the system's dynamic barycentric coordinates."
+             data-help-ja="カメラ自動周回トグル：システムの重心を中心に、カメラを一定の角速度で滑らかに自動回転させる周回モードを切り替えます。">ORBIT</button>
+   </div>
+
+   <div class="section" data-help-en="BARYCENTER VISUALIZATION: Toggles real-time dynamic rendering of the common center of mass for the top-2 primary massive bodies." data-help-ja="共通重心可視化：質量上位2天体の間で動的に変動する「バリセンター（共通重心）」のマーカー表示を切り替えます。">
+     <button id="toggleBaryBtn" class="toggle-off" data-en="BARY" data-ja="重心">BARY</button>
+   </div>
+
+   <button id="toggle-momentum-btn" class="toggle-off"
+           data-en="L-VEC" data-ja="角運動量"
+           data-help-en="ANGULAR MOMENTUM VECTOR: Visualizes the net rotational momentum vector (L-vector) of the active system, verifying the absolute cosmic law of conservation."
+           data-help-ja="角運動量ベクトル表示：現在の天体システムの回転運動の総量と向きを示す「角運動量ベクトル」を3D空間上に動的描画します。">L-VEC</button>
+
+   <div class="section">
+     <button id="cometTrailBtn" class="toggle-off" data-en="CMT I" data-ja="彗星 I" data-help-en="COMET TRAIL ONLY: Limits path rendering exclusively to comets." data-help-ja="彗星軌跡のみ：軌道の軌跡レンダリングを「彗星（Comet）」だけに限定します。">CMT I</button>
+     <button id="planetTrailBtn" class="toggle-off" data-en="PLN O" data-ja="惑星 O" data-help-en="PLANET TRAIL ONLY: Limits path rendering exclusively to planets." data-help-ja="惑星軌跡のみ：軌道の軌跡レンダリングを「一般天体（Obj）」だけに限定します。">PLN O</button>
+     <button id="sunTrailBtn" class="toggle-off" data-en="SUN P" data-ja="太陽 P" data-help-en="SUN TRAIL ONLY: Limits path rendering exclusively to the central star." data-help-ja="太陽軌跡のみ：軌道の軌跡レンダリングを「中心星（太陽）」だけに限定します。">SUN P</button>
+   </div>
+
+   <div class="section">
+     <button id="showNames" class="toggle-off" data-en="NAME N" data-ja="名前 N" data-help-en="SHOW NAMES: Overlays telemetry data (Name & Velocity) onto each body." data-help-ja="名前表示：各天体の現在位置に「識別名＆速度ベクトル」のテレメトリーデータをオーバーレイ表示します。">NAME N</button>
+   </div>
+
+   <div class="control-group" data-help-en="ORBITAL AUTO-ROTATION: Configures angular velocity for global camera tracking mode." data-help-ja="カメラ自動周回：自動回転モードが有効な場合の、グローバルな空間追尾カメラの角速度（回転スピード）を設定します。">
+     <div class="speed-control-line">
+       <button id="btnToggleRotate" class="toggle-off" data-en="AUTO" data-ja="自動">AUTO</button>
+       <input type="range" id="cameraRotateSpeed" min="0" max="0.05" step="0.001" value="0.001">
+       <input type="number" id="rotateSpeedInput" min="0" max="0.05" step="0.001" value="0.001">
+     </div>
+   </div>
+
+   <div class="section" id="cameraPresetSection" data-help-en="CAMERA PRESETS: Instantaneous vector realignment for equatorial, polar, or bird's-eye global views." data-help-ja="カメラプリセット：カメラのアングルを、赤道面平行（Equator）、極域真上（Polar）、高高度俯瞰（Overview）へ瞬時にリアルタイム再アライメント（一発変更）します。">
+     <label data-en="VIEW:" data-ja="視点:">VIEW:</label>
+     <button id="camEquatorBtn" data-en="Equator" data-ja="赤道面" data-help-en="EQUATORIAL VIEW: Snaps camera angle parallel to the celestial equator plane." data-help-ja="赤道面視点：カメラ角度を天体赤道面と平行な垂直アングルにスナップします。">Equator</button>
+     <button id="camPolarBtn" data-en="Polar" data-ja="極域" data-help-en="POLAR VIEW: Aligns camera directly above the stellar rotational pole." data-help-ja="極域視点：カメラ位置を中心星の自転軸真上（北極側）に配置し、真上から見下ろします。">Polar</button>
+     <button id="camOverviewBtn" data-en="Overview" data-ja="全体俯瞰" data-help-en="OVERVIEW: Sets a high-altitude isometric perspective for maximum sector tracking." data-help-ja="全体俯瞰：セクター内の最大追跡を可能にする、高高度からのアイソメトリック（斜め見下ろし）視点に設定します。">Overview</button>
+   </div>
+
+   <div class="section" data-help-en="BODY COUNT: Configures maximum initial object capacity within the envelope." data-help-ja="初期天体数：セクター初期化（ビッグバン）の際にエンベロープ内に一度に配置する、最大天体許容量を設定します。">
+     <div class="speed-control-line">
+       <label data-en="QTY:" data-ja="数量:">QTY:</label>
+       <input type="range" id="bodyCount" min="0" max="3000" value="300">
+       <input type="number" id="bodyCountInput" min="0" max="3000" value="300">
+     </div>
+   </div>
+
+   <div class="section" style="display: flex; flex-direction: row; gap: 10px;" data-help-en="TELEMETRY REALTIME STREAM: Monitors exact entity counts, computation loops, velocity vectors, and entity casualties." data-help-ja="リアルタイム・テレメトリーストリーム：正確な天体数、計算ループ、速度ベクトル、および天体の消滅（脱出・衝突）をリアルタイムに一元監視します。">
+     <div id="bodyCountDisplay" style="color:white; font-size:12px;">Sun: 0 / Obj: 0 / Comet: 0</div>
+     <div id="turnCountDisplay" style="color:white; font-size:12px;">Turn: 0</div>
+     <div id="barycenterNameDisplay" style="color:#00ffcc; font-size:12px;">Barycenter: -</div>
+     <div id="barycenterPosDisplay" style="color:#a3ffee; font-size:12px;">Barycenter Pos: -</div>
+     <div id="barycenterMassDisplay" style="color:#ff99cc; font-size:12px;">Barycenter Mass: -</div>
+     <div id="sunSpeedDisplay" style="color:white; font-size:12px;">Sun Speed: 0</div>
+     <div>Alive: <span id="statAlive">0</span></div>
+     <div>Escaped: <span id="statEscaped" style="color: #ffaa00;">0</span></div>
+     <div>Collided: <span id="statCollided" style="color: #ff4444;">0</span></div>
+     <div>Removed: <span id="statRemoved" style="color: #888888;">0</span></div>
+     <div>NaN: <span id="statNaN" style="color: #ff00ff; font-weight: bold;">0</span></div>
+   </div>
+
+   <button id="copyTelemetryBtn" type="button" class="toggle-off"
+           data-en="COPY" data-ja="コピー"
+           data-help-en="COPY TELEMETRY: Exports real-time orbital vector and physics telemetry data directly to the system clipboard."
+           data-help-ja="テレメトリコピー：全天体のリアルタイムな軌道データなどをクリップボードへエクスポートします。">COPY</button>
+
+   <div class="help-monitor">
+     <div id="helpText" data-en="CONSOLE ONLINE: Hover mouse cursor over telemetry components to stream subsystem data." data-ja="コントロールパネル正常：マウスカーソルを各コンポーネントに重ねると、ここに詳細な日本語仕様ストリームが流れます。">CONSOLE ONLINE: Hover mouse cursor over telemetry components to stream subsystem data.</div>
+   </div>
+
+   <button id="triggerGoliathBtn" type="button" class="toggle-off"
+           data-en="SUN II" data-ja="第二の太陽"
+           data-help-en="GOLIATH DEPLOYMENT: Spawns a supermassive binary companion star 'Goliath' directly into the active sector, heavily perturbing the solar core."
+           data-help-ja="重力摂動の注入：太陽を揺るがす超巨大質量天体「Goliath」（第二の太陽）を軌道に投入し、スイングバイや天体衝突の発生確率を極限まで高めます。">SUN II</button>
+
+   <div id="settingsPanel" class="settings-panel" data-stage="0">
+
+     <div class="section" data-help-en="GRAVITY MULTIPLIER: Scales the overarching cosmic gravitational constant (G-constant)." data-help-ja="重力倍率：宇宙全体に適用される万有引力定数（G定数）のスケールを調整します。">
+       <label><span data-en="gravitySlider:" data-ja="万有引力定数 (G):">gravitySlider:</span>
+         <input type="range" id="gravitySlider" min="0.1" max="3" step="0.1" value="1">
+         <input type="number" id="gravityInput" min="0.1" max="3" step="0.1" value="1">
+       </label>
+     </div>
+
+     <div class="section" data-help-en="SPAWN VELOCITY MULTIPLIER: Scales initial tangent orbital velocity vector for newly generated bodies." data-help-ja="初期速度倍率：ランダム生成される新しい天体が、生成時に持つ初期の接線軌道速度ベクトルの大きさをスケールします。">
+       <label><span data-en="spawnVelSlider:" data-ja="初期天体速度倍率:">spawnVelSlider:</span>
+         <input type="range" id="spawnVelSlider" min="0.1" max="3" step="0.1" value="1">
+         <input type="number" id="spawnVelInput" min="0.1" max="3" step="0.1" value="1">
+       </label>
+     </div>
+
+     <div class="section" data-help-en="TRAIL LENGTH MULTIPLIER: Dynamically expands maximum buffer limit for orbit path retention history." data-help-ja="軌跡バッファ長：天体が描画を保持できる過去の軌道履歴ラインの最大バッファ限界（長さ）を動的に拡張します。">
+       <label><span data-en="trailLenSlider:" data-ja="軌跡ラインの長さ:">trailLenSlider:</span>
+         <input type="range" id="trailLenSlider" min="0.1" max="3" step="0.1" value="0.5">
+       </label>
+     </div>
+
+     <div class="section" data-help-en="MASS & DISTANCE RANGE: Configures algorithmic generation envelopes for random sector initializations." data-help-ja="質量・距離レンジ：初期化（ビッグバン）の際にランダム生成される各天体の質量エンベロープと、中心からの配置距離の範囲を設定します。">
+       <div class="grid-4way-line">
+         <label data-en="RANGE:" data-ja="生成領域:">RANGE:</label>
+         <input type="number" id="spawnMinMass" min="0.1" max="200" step="0.1" value="0.1">
+         <span class="math-gate">≤ M ≤</span>
+         <input type="number" id="spawnMaxMass" min="0.1" max="200" step="0.1" value="5.0">
+         <span class="split-bar">|</span>
+         <input type="number" id="spawnMinDist" min="50" max="5000" step="50" value="300">
+         <span class="math-gate">≤ R ≤</span>
+         <input type="number" id="spawnMaxDist" min="50" max="5000" step="50" value="1200">
+       </div>
+     </div>
+
+     <div class="section" data-help-en="COMPUTATIONAL THRESHOLDS: Configures direct N-body calculation cap limits and singularities softening scale (EPS²)." data-help-ja="計算しきい値＆軟化係数：多体問題（N-body）の直接計算上限数、および近接衝突時の無限大発散（重力崩壊バグ）を防ぐ軟化パラメータ（EPS²）を設定します。">
+       <div class="speed-control-line">
+         <label data-en="N-BODY:" data-ja="演算上限:">N-BODY:</label>
+         <input type="number" id="nbodyThreshold" min="50" max="2000" step="10" value="150">
+         <label data-en="EPS²:" data-ja="軟化係数:">EPS²:</label>
+         <input type="number" id="eps2Input" min="0" max="200" step="1" value="64">
+       </div>
+     </div>
+
+     <div id="sunControlBlock">
+       <div class="sunControlContent" style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+
+         <div class="speed-control-line" data-help-en="SUN MASS: Adjusts core star mass. Increasing value multiplies gravitational pull." data-help-ja="太陽質量：コアスター（太陽）の質量を直接調整します。値を大きくすると引き寄せる引力が乗算的に増大します。">
+           <label><span data-en="Sun Mass:" data-ja="太陽質量:">Sun Mass:</span></label>
+           <input id="sunMass" type="range" min="10" max="5000" value="2000">
+           <input id="sunMassInput" type="number" min="10" max="5000" value="2000">
+         </div>
+
+         <div class="speed-control-line" data-help-en="SUN INIT VELOCITY X: Sets the initial stellar velocity vector along the X-axis (horizontal impulse)." data-help-ja="太陽初期速度(X)：中心星に対して、X軸方向（横方向）の初速度インパルス（推進力）を与えます。">
+           <label><span data-en="Sun Velocity (X):" data-ja="太陽 初期速度 (X):">Sun Velocity (X):</span></label>
+           <input type="range" id="sunVxSlider" min="-50" max="50" step="0.1" value="0">
+           <input type="number" id="sunVxInput" step="0.1" value="0">
+         </div>
+
+         <div class="speed-control-line" data-help-en="SUN INIT VELOCITY Y: Sets the initial stellar velocity vector along the Y-axis (vertical impulse)." data-help-ja="太陽初期速度(Y)：中心星に対して、Y軸方向（縦方向）の初速度インパルス（推進力）を与えます。">
+           <label><span data-en="Sun Velocity (Y):" data-ja="太陽 初期速度 (Y):">Sun Velocity (Y):</span></label>
+           <input type="range" id="sunVySlider" min="-50" max="50" step="0.1" value="0">
+           <input type="number" id="sunVyInput" step="0.1" value="0">
+         </div>
+
+         <div class="speed-control-line" data-help-en="SUN INIT VELOCITY Z: Sets the initial stellar velocity vector along the Z-axis (depth impulse)." data-help-ja="太陽初期速度(Z)：中心星に対して、Z軸方向（奥行き方向）の初速度インパルス（推進力）を与えます。">
+           <label><span data-en="Sun Velocity (Z):" data-ja="太陽 初期速度 (Z):">Sun Velocity (Z):</span></label>
+           <input type="range" id="sunVzSlider" min="-50" max="50" step="0.1" value="0">
+           <input type="number" id="sunVzInput" step="0.1" value="0">
+         </div>
+
+         <div class="speed-control-line" data-help-en="OBJECT MASS: Defines base mass baseline for newly spawned minor bodies." data-help-ja="生成天体質量：新しく生成されるマイナー天体（Obj）の、ベースラインとなる基準質量を定義します。">
+           <label><span data-en="Object Mass:" data-ja="生成天体の基本質量:">Object Mass:</span></label>
+           <input id="objMass" type="range" min="0.1" max="50" step="0.1" value="1.0">
+           <input id="objMassInput" type="number" min="0.1" max="200" step="0.1" value="1.0">
+         </div>
+
+         <div class="speed-control-line" data-help-en="FIXED OBJECT MASS: Enforces uniform mass across all newly spawned objects when activated." data-help-ja="均一質量強制：有効化すると、ランダムレンジを無視し、生成されるすべての天体に上記の固定質量を強制適用します。">
+           <label><span data-en="Spawn Mass Mode:" data-ja="質量適用モード:">Spawn Mass Mode:</span></label>
+           <button id="useFixedObjMassBtn" type="button" class="toggle-off" style="width: 65px !important; height: 24px; line-height: 18px; padding: 0;" data-en="RND" data-ja="ランダム" data-alt-en="FIX" data-alt-ja="固定">RND</button>
+           <div class="circuit-filler" id="massStatusIndicator">M-FIX</div>
+         </div>
+
+         <div class="speed-control-line" data-help-en="SIMULATION SPEED: Modifies Delta-Time step resolution per calculation frame." data-help-ja="シミュレーション速度：1フレームの計算ごとに進む時間ステップ（Delta-Time）の解像度を変更し、宇宙の進む速さを倍加します。">
+           <label><span data-en="Simulation Speed:" data-ja="時間進行速度:">Simulation Speed:</span></label>
+           <input type="range" id="speedSlider" min="1" max="30" step="1" value="10">
+           <input type="number" id="speedInput" min="1" max="30" step="1" value="10">
+         </div>
+
+         <div class="monitor-stream-block" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
+           <div class="speed-control-line" data-help-en="COSMIC AGE: Elapsed simulation time scale." data-help-ja="宇宙年齢：シミュレーション開始からの累計経過時間を示します。">
+             <label style="width: auto; min-width: 90px;"><span data-en="Cosmic Age:" data-ja="宇宙年齢:">宇宙年齢:</span></label>
+             <div id="statSimTime" style="flex: 1; font-family: 'Consolas', monospace; color: #00ffff !important; font-weight: bold; text-shadow: 0 0 4px rgba(0,255,255,0.6); font-size: 11px; text-align: left; padding-left: 8px;">AGE: 0000 Yr, 00 Mo, 00 Day [0.0s]</div>
+             <div class="circuit-filler">TIME</div>
+           </div>
+           <div class="speed-control-line" data-help-en="ENGINE RUNTIME: Real-world active processing time." data-help-ja="稼働時間：このシミュレータが起動してからの、現実の処理時間です。">
+             <label style="width: auto; min-width: 90px;"><span data-en="Engine Runtime:" data-ja="稼働時間:">稼働時間:</span></label>
+             <div id="statRunTime" style="flex: 1; font-family: 'Consolas', monospace; color: #ffaa00 !important; font-weight: bold; text-shadow: 0 0 4px rgba(255,170,0,0.6); font-size: 11px; text-align: left; padding-left: 8px;">RUN: 00:00.0</div>
+             <div class="circuit-filler">CORE</div>
+           </div>
+           <div class="speed-control-line" data-help-en="REAL TIME: Current system wall-clock time." data-help-ja="現実時刻：オペレーターが現在いる現実世界のローカルシステム時刻です。">
+             <label style="width: auto; min-width: 90px;"><span data-en="Real Time:" data-ja="現実時刻:">現実時刻:</span></label>
+             <div id="statRealTime" style="flex: 1; font-family: 'Consolas', monospace; color: #00ff00 !important; font-weight: bold; text-shadow: 0 0 4px rgba(0,255,0,0.6); font-size: 11px; text-align: left; padding-left: 8px;">REAL: 00:00:00</div>
+             <div class="circuit-filler">WALL</div>
+           </div>
+         </div>
+
+         <div class="speed-control-line" data-help-en="SAVE / LOAD: Writes/Reads present orbital vectors to local memory slots (0-2)." data-help-ja="セーブ／ロード：現在の宇宙の全天体ベクトルを、ローカルメモリのスロット（0〜2）に書き込み、または読み込みます。">
+           <label style="width: auto; min-width: 90px;"><span data-en="Memory Core:" data-ja="時空記録コア:">時空記録コア:</span></label>
+           <div style="display: flex; flex: 1; gap: 8px; justify-content: flex-start; align-items: center; padding-left: 8px;">
+             <span style="color: #55ffdd; font-family: monospace; font-size: 10px;">[0]</span>
+             <button onclick="saveUniverse(0)" style="height: 20px; line-height: 16px; padding: 0 6px; font-size: 9px; background: linear-gradient(180deg, #5c3311 0%, #2b1704 100%) !important; border-color: #aa5511 !important; color: #ffaa44 !important;">SAVE</button>
+             <button onclick="loadUniverse(0)" style="height: 20px; line-height: 16px; padding: 0 6px; font-size: 9px;">LOAD</button>
+             <div class="split-bar" style="color: #444; padding: 0 2px;">|</div>
+             <span style="color: #55ffdd; font-family: monospace; font-size: 10px;">[1]</span>
+             <button onclick="saveUniverse(1)" style="height: 20px; line-height: 16px; padding: 0 6px; font-size: 9px; background: linear-gradient(180deg, #5c3311 0%, #2b1704 100%) !important; border-color: #aa5511 !important; color: #ffaa44 !important;">SAVE</button>
+             <button onclick="loadUniverse(1)" style="height: 20px; line-height: 16px; padding: 0 6px; font-size: 9px;">LOAD</button>
+             <div class="split-bar" style="color: #444; padding: 0 2px;">|</div>
+             <span style="color: #55ffdd; font-family: monospace; font-size: 10px;">[2]</span>
+             <button onclick="saveUniverse(2)" style="height: 20px; line-height: 16px; padding: 0 6px; font-size: 9px; background: linear-gradient(180deg, #5c3311 0%, #2b1704 100%) !important; border-color: #aa5511 !important; color: #ffaa44 !important;">SAVE</button>
+             <button onclick="loadUniverse(2)" style="height: 20px; line-height: 16px; padding: 0 6px; font-size: 9px;">LOAD</button>
+           </div>
+           <div class="circuit-filler">MEM</div>
+         </div>
+
+         <div class="speed-control-line" data-help-en="CONSOLE DIAGNOSTICS: Tests internal physics engine memory, entity allocation, and pipeline consistency via console stream." data-help-ja="コンソール自己診断：現在の物理エンジンの内部メモリ、オブジェクトの生存破損ステータス、およびレンダリングループの整合性をテスト出力します。">
+           <label><span data-en="System Diagnosis:" data-ja="システム自己診断:">システム自己診断:</span></label>
+           <button id="consoleTestBtn" type="button" class="toggle-off" style="width: 65px !important; height: 24px; line-height: 18px; padding: 0;" data-en="DIAG" data-ja="自己診断">DIAG</button>
+           <div class="circuit-filler" id="diagStatusIndicator">READY</div>
+         </div>
+
+       </div>
+     </div> </div> </div> <canvas id="canvas"></canvas>
+
+<div id="lastUpdatedBottom" class="updated" style="position:fixed; bottom:10px; left:10px;"></div>
+
+   <script src="orbit3d_Va4.js" defer></script>
+
+   <script>
+// =========================================================
+// 🌐 【完全版】日英リアルタイム一括言語切り替え＆初期化サブシステム
+// =========================================================
+window.currentLang = 'en'; // デフォルトは英語
+
+// 各要素の初期 data-help を現在の言語（en）で満たす初期化関数
+function initLangDataHelp() {
+     document.querySelectorAll('[data-help-en][data-help-ja]').forEach(el => {
+         const initialHelp = el.getAttribute(`data-help-${window.currentLang}`);
+         if (initialHelp) el.setAttribute('data-help', initialHelp);
+     });
+}
+
+// 言語切り替えメインロジック
+document.getElementById('toggleLangBtn').addEventListener('click', () => {
+     // 言語状態を反転
+     window.currentLang = (window.currentLang === 'en') ? 'ja' : 'en';
+
+     // インジケーターボタン自体の表記を切り替え
+     document.getElementById('toggleLangBtn').textContent = `Language: ${window.currentLang.toUpperCase()}`;
+
+     // 1. 全ての対応要素のテキストコンテンツを置換
+     document.querySelectorAll('[data-en][data-ja]').forEach(el => {
+         if (el.tagName === 'BUTTON' || el.tagName === 'SPAN' || el.tagName === 'OPTION') {
+             const targetText = el.getAttribute(`data-${window.currentLang}`);
+             if (targetText) el.textContent = targetText;
+         }
+     });
+
+     // 2. ラベル内のテキストノードを安全に置換
+     document.querySelectorAll('label [data-en][data-ja]').forEach(el => {
+         const targetText = el.getAttribute(`data-${window.currentLang}`);
+         if (targetText) el.textContent = targetText;
+     });
+
+     // 3. 全てのdata-help属性を、現在の言語のhelpデータに書き換える
+     document.querySelectorAll('[data-help-en][data-help-ja]').forEach(el => {
+         const newHelp = el.getAttribute(`data-help-${window.currentLang}`);
+         if (newHelp) el.setAttribute('data-help', newHelp);
+     });
+
+     // ガイダンスモニターの初期表示（デフォルト表示）も言語に合わせる
+     const helpTextEl = document.getElementById("helpText");
+     if (helpTextEl) {
+         const defaultEl = document.querySelector("#helpText");
+         helpTextEl.textContent = defaultEl.getAttribute(`data-${window.currentLang}`);
+     }
+
+     console.log(`%c 🌐 Control Panel Language Realignment ──> ${window.currentLang.toUpperCase()}`, "color: #00ffcc; font-weight: bold;");
+});
+
+// DOM読み込み完了時、および即座に初期化を実行してdata-helpを生成するわ！
+if (document.readyState === 'loading') {
+     document.addEventListener('DOMContentLoaded', initLangDataHelp);
+} else {
+     initLangDataHelp();
+}
+
+// =========================================================
+// 既存のUIコントロールロジック（そのまま継承よ！）
+// =========================================================
+document.addEventListener("DOMContentLoaded", () => {
+     const toggleButtons = [
+         document.getElementById("toggleBaryBtn"),
+         document.getElementById("toggle-momentum-btn")
+     ];
+
+     toggleButtons.forEach(btn => {
+         btn.addEventListener("click", () => {
+             btn.classList.toggle("active");
+         });
+     });
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+     const presetButtons = [
+         document.getElementById("presetStableBtn"),
+         document.getElementById("presetChaosBtn"),
+         document.getElementById("presetScatterBtn"),
+         document.getElementById("presetRenderBtn"),
+         document.getElementById("triggerGoliathBtn"),
+         document.getElementById("btnOrbitCam")
+     ];
+
+     presetButtons.forEach(btn => {
+         btn.addEventListener("click", () => {
+             presetButtons.forEach(b => b.classList.remove("active", "toggle-on"));
+             btn.classList.add("active");
+         });
+     });
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+     const camButtons = [
+         document.getElementById("camEquatorBtn"),
+         document.getElementById("camPolarBtn"),
+         document.getElementById("camOverviewBtn")
+     ];
+
+     camButtons.forEach(btn => {
+         btn.addEventListener("click", () => {
+             camButtons.forEach(b => b.classList.remove("active", "toggle-on"));
+             btn.classList.add("active");
+         });
+     });
+});
+
+const toggleSettingsBtn = document.getElementById("toggleSettingsBtn");
+const settingsPanel = document.getElementById("settingsPanel");
+
+// 👑【JS執行】立体トグルボタン（FIX M）の点灯・消灯ループロジック
+const fixedMassBtn = document.getElementById("useFixedObjMassBtn");
+if (fixedMassBtn) {
+     fixedMassBtn.onclick = function() {
+         // 烈火のオレンジ発光（toggle-on/off）をミリ単位でカチカチと切り替えるだけ！
+         this.classList.toggle("toggle-on");
+         this.classList.toggle("toggle-off");
+     };
+}
+
+
+
+// =========================================================
+// 👑 コックピット統合変形：3段階ステージ（0 ──> 1 ──> 2）巡航制御ロジック
+// =========================================================
+if (toggleSettingsBtn && settingsPanel) {
+   // 初期状態をHTML側の data-stage から安全に Getter して同期
+   let currentStage = parseInt(toggleSettingsBtn.getAttribute("data-stage") || "1", 10);
+
+   // 起動時にCSSと状態を100%完全同期させるための初期執行
+   settingsPanel.setAttribute("data-stage", currentStage);
+
+   toggleSettingsBtn.addEventListener("click", () => {
+     // 👑【ローテーション数理】ステージを 0 ──> 1 ──> 2 ──> 0 へ無限ループ巡航させる
+     currentStage = (currentStage + 1) % 3;
+
+     // 1. パネルとボタンの data-stage 属性（データソース）を Setter で同時更新
+     settingsPanel.setAttribute("data-stage", currentStage);
+     toggleSettingsBtn.setAttribute("data-stage", currentStage);
+
+     // 2. 👑【言語ストレージの同期】現在のステージに応じたテキスト定義を上書き
+     if (currentStage === 0) {
+       toggleSettingsBtn.setAttribute("data-en", "SYS: OFF");
+       toggleSettingsBtn.setAttribute("data-ja", "システム: 全閉");
+     } else if (currentStage === 1) {
+       toggleSettingsBtn.setAttribute("data-en", "SYS: SET1");
+       toggleSettingsBtn.setAttribute("data-ja", "システム: 基本設定");
+     } else if (currentStage === 2) {
+       toggleSettingsBtn.setAttribute("data-en", "SYS: SET2");
+       toggleSettingsBtn.setAttribute("data-ja", "システム: 特権演算");
+     }
+
+     // 3. 現在の選択言語に合わせてボタンの表面文字を即座に執行（リフレッシュ）
+     const targetText = toggleSettingsBtn.getAttribute(`data-${window.currentLang}`);
+     if (targetText) toggleSettingsBtn.textContent = targetText;
+
+     // 4. ガイドラインの再計算をキック（レイアウト崩れバグの完全防衛）
+     adjustCanvasMargin();
+   });
+}
+
+
+/* Dynamic Guidance Monitor Script (言語スイッチの属性と統合) */
+document.addEventListener("DOMContentLoaded", () => {
+   const helpTextEl = document.getElementById("helpText");
+
+   document.querySelectorAll("[data-help]").forEach(el => {
+     el.addEventListener("mouseenter", () => {
+       const msg = el.getAttribute("data-help");
+       if (msg && helpTextEl) helpTextEl.textContent = msg;
+     });
+     el.addEventListener("mouseleave", () => {
+       if (helpTextEl) {
+         const defaultEl = document.querySelector("#helpText");
+         helpTextEl.textContent = defaultEl.getAttribute(`data-${window.currentLang}`);
+       }
+     });
+   });
+});
+
+function formatDate(d) {
+   const y = d.getFullYear();
+   const m = String(d.getMonth() + 1).padStart(2, "0");
+   const day = String(d.getDate()).padStart(2, "0");
+   const h = String(d.getHours()).padStart(2, "0");
+   const min = String(d.getMinutes()).padStart(2, "0");
+   return `${y}/${m}/${day} ${h}:${min}`;
+}
+
+const now = new Date();
+const text = "LAST UPDATE: " + formatDate(now);
+
+const bottomEl = document.getElementById("lastUpdatedBottom");
+if (bottomEl) bottomEl.textContent = text;
+
+document.addEventListener("DOMContentLoaded", () => {
+   const eqBtn = document.getElementById("camEquatorBtn");
+   const plBtn = document.getElementById("camPolarBtn");
+   const ovBtn = document.getElementById("camOverviewBtn");
+
+   if (eqBtn) eqBtn.addEventListener("click", () => applyCameraPreset('equator'));
+   if (plBtn) plBtn.addEventListener("click", () => applyCameraPreset('polar'));
+   if (ovBtn) ovBtn.addEventListener("click", () => applyCameraPreset('overview'));
+});
+
+function adjustCanvasMargin() {
+   const bar = document.getElementById("topBar");
+   const canvas = document.getElementById("canvas");
+   if (bar && canvas) {
+     canvas.style.paddingTop = bar.offsetHeight + "px";
+   }
+}
+
+window.addEventListener("resize", adjustCanvasMargin);
+
+
+
+   </script>
+</body>
+</html>
+
