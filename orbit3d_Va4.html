@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Orbit Simulation Console</title>
+
+  <style>
+/* =========================================================
+     4. RETRO NASA CLASSIC (APOLLO SPACECRAFT STYLE)
+========================================================= */
+#topBar {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    box-sizing: border-box;
+    background: #2b3036;
+    border-bottom: 3px solid #707780;
+    padding: 8px 12px;
+    gap: 12px;
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    z-index: 3000;
+    font-family: 'Consolas', 'Courier New', monospace;
+    box-shadow: inset 0 2px 0 rgba(255,255,255,0.2), 0 4px 15px rgba(0,0,0,0.6);
+}
+
+.section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    height: 30px;
+    box-sizing: border-box;
+    background: #1e2226;
+    border: 1px solid #485058;
+    border-radius: 2px;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+}
+.section.vertical { flex-direction: row; height: 30px; }
+
+#topBar label, #topBar span, #topBar div {
+    color: #55ffdd !important;
+    font-size: 11px;
+    font-weight: bold;
+    text-shadow: 0 0 3px rgba(85,255,221,0.5);
+    letter-spacing: 0.5px;
+}
+
+#topBar button {
+    background: linear-gradient(180deg, #485058 0%, #2b3036 100%);
+    border-top: 1px solid #68727c;
+    border-bottom: 2px solid #15181b;
+    border-left: 1px solid #383e44;
+    border-right: 1px solid #383e44;
+    color: #e0e5eb;
+    border-radius: 1px;
+    padding: 1px 10px;
+    font-size: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    height: 22px;
+    line-height: 18px;
+    text-shadow: 0 -1px 0 rgba(0,0,0,0.5);
+}
+#topBar button:hover {
+    background: #505963;
+    color: #ffffff;
+}
+
+#topBar button.toggle-on,
+#topBar button.active {
+    background: linear-gradient(180deg, #ff7700 0%, #b34400 100%) !important;
+    border-color: #ffaa55 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 10px rgba(255, 119, 0, 0.6) !important;
+    text-shadow: 0 0 4px #fff;
+}
+
+/* 👑 【原点回帰】他の通常ボタンと全く同じ立体デザインを維持し、発光だけを完全に消灯する */
+#topBar button.toggle-off,
+#presetPanel button.toggle-off {
+    /* 💥 漆黒背景も18pxもインセットもすべてパージ！ */
+    /* 🎨 デフォルトボタン（#topBar button）と100%同じ背景グラデーションと立体枠線を強制復旧 */
+    background: linear-gradient(180deg, #485058 0%, #2b3036 100%) !important;
+    border-top: 1px solid #68727c !important;
+    border-bottom: 2px solid #15181b !important;
+    border-left: 1px solid #383e44 !important;
+    border-right: 1px solid #383e44 !important;
+    color: #e0e5eb !important; /* 文字も他の通常ボタンと同じ綺麗な薄グレー */
+        /* 高さや文字サイズも通常ボタンの規律に完全同期 */
+    height: 22px !important;
+    line-height: 18px !important;
+    padding: 1px 10px !important;
+    font-size: 10px !important;
+    font-weight: bold !important;
+    text-shadow: 0 -1px 0 rgba(0,0,0,0.5) !important;
+
+    /* ✨ オン時の烈火のオレンジ発光（box-shadow / text-shadow）だけを、冷徹に「無し」にする */
+    box-shadow: none !important;
+        transition: all 0.2s ease;
+}
+
+/* 🕹️ 通常ボタンと同じホバー規律も完全にシンクロ */
+#topBar {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    box-sizing: border-box;
+    background: #2b3036;
+    border-bottom: 3px solid #707780;
+    padding: 8px 12px;
+    gap: 12px;
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    z-index: 3000;
+    font-family: 'Consolas', 'Courier New', monospace;
+    box-shadow: inset 0 2px 0 rgba(255,255,255,0.2), 0 4px 15px rgba(0,0,0,0.6);
+}
+
+.section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    height: 30px;
+    box-sizing: border-box;
+    background: #1e2226;
+    border: 1px solid #485058;
+    border-radius: 2px;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+}
+.section.vertical { flex-direction: row; height: 30px; }
+
+#topBar label, #topBar span, #topBar div {
+    color: #55ffdd !important;
+    font-size: 11px;
+    font-weight: bold;
+    text-shadow: 0 0 3px rgba(85,255,221,0.5);
+    letter-spacing: 0.5px;
+}
+
+#topBar button {
+    background: linear-gradient(180deg, #485058 0%, #2b3036 100%);
+    border-top: 1px solid #68727c;
+    border-bottom: 2px solid #15181b;
+    border-left: 1px solid #383e44;
+    border-right: 1px solid #383e44;
+    color: #e0e5eb;
+    border-radius: 1px;
+    padding: 1px 10px;
+    font-size: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    height: 22px;
+    line-height: 18px;
+    text-shadow: 0 -1px 0 rgba(0,0,0,0.5);
+}
+#topBar button:hover {
+    background: #505963;
+    color: #ffffff;
+}
+
+#topBar button.toggle-on,
+#topBar button.active {
+    background: linear-gradient(180deg, #ff7700 0%, #b34400 100%) !important;
+    border-color: #ffaa55 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 10px rgba(255, 119, 0, 0.6) !important;
+    text-shadow: 0 0 4px #fff;
+}
+
+/* 👑 【原点回帰】トグルオフ規律 */
+#topBar button.toggle-off,
+#presetPanel button.toggle-off {
+    background: linear-gradient(180deg, #485058 0%, #2b3036 100%) !important;
+    border-top: 1px solid #68727c !important;
+    border-bottom: 2px solid #15181b !important;
+    border-left: 1px solid #383e44 !important;
+    border-right: 1px solid #383e44 !important;
+    color: #e0e5eb !important;
+    height: 22px !important;
+    line-height: 18px !important;
+    padding: 1px 10px !important;
+    font-size: 10px !important;
+    font-weight: bold !important;
+    text-shadow: 0 -1px 0 rgba(0,0,0,0.5) !important;
+    box-shadow: none !important;
+    transition: all 0.2s ease;
+}
+#topBar button.toggle-off:hover,
+#presetPanel button.toggle-off:hover {
+    background: #505963 !important;
+    color: #ffffff !important;
+}
+
+#topBar input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: #101214;
+    height: 4px;
+    width: 90px;
+    vertical-align: middle;
+    margin: 0 4px;
+}
+#topBar input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    background: #d0d5dd;
+    border: 1px solid #485058;
+    width: 8px;
+    height: 14px;
+    border-radius: 1px;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+#topBar input[type="number"],
+#topBar select {
+    background: #0b0d0e;
+    border: 1px solid #485058;
+    color: #ff9900;
+    font-family: 'Consolas', monospace;
+    font-size: 10px;
+    height: 18px; /* 基本設定 */
+    text-align: center;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.9);
+}
+
+/* =========================================================
+ * 👑 コックピット統合変形：3段階ステージ属性制御（残党完全駆逐版）
+ * ========================================================= */
+.settings-panel {
+    background: #1e2226 !important;
+    border-top: 2px solid #485058 !important;
+    margin-top: 5px;
+    padding: 8px;
+    gap: 10px;
+    width: 100%;
+    box-shadow: inset 0 3px 10px rgba(0,0,0,0.8);
+    flex-wrap: wrap;
+}
+
+/* 🚨 古い .settings-panel.open { display: flex !important; } はここに書いてあっても完全に消去（除霊）すること！ */
+
+/* Stage 0: 完全隠蔽（5万個の純粋深宇宙観測モード） */
+.settings-panel[data-stage="0"] {
+    display: none !important;
+}
+
+/* Stage 1 & 2: 属性を最優先（!important）にしてパネル基本進出を強制執行 */
+.settings-panel[data-stage="1"],
+.settings-panel[data-stage="2"] {
+    display: flex !important;
+}
+
+/* Stage 1（基本設定のみ表示）：詳細星界ブロックの表示を最優先で『徹底遮断』 */
+.settings-panel[data-stage="1"] #sunControlBlock {
+    display: none !important;
+}
+
+/* Stage 2（特権演算全開放）：隠されていた心臓部を解放し、他行と一斉直列アライメント */
+.settings-panel[data-stage="2"] #sunControlBlock {
+    display: block !important;
+    width: 100%;
+}
+
+
+/* =========================================================
+   📡 GUIDANCE MONITOR STYLE (3列目全幅・マルチライン対応)
+   ========================================================= */
+.help-monitor {
+    display: block;             /* 💡 flexからblockへ変更し、文章としての自然な縦伸びを許可 */
+    width: 100%;                /* 3列目の横幅いっぱいに贅沢に広げる規律 */
+    min-height: 25px;           /* 💡 高さを固定(30px)から「最低54px（約3行分）」へ解放 */
+    max-height: 90px;           /* 万が一の超長文でもパネルを突き破らないための天井 */
+    padding: 6px 12px;
+    box-sizing: border-box;
+    background: #101214;
+    border: 1px solid #ff9900;
+    border-radius: 2px;
+    box-shadow: inset 0 0 8px rgba(255,153,0,0.3);
+    overflow-y: auto;           /* 💡 スライダーをガチャガチャ動かして文章が溢れたら内部スクロールで防衛 */
+}
+
+#helpText {
+    color: #ff9900 !important;
+    font-family: 'Consolas', monospace;
+    font-size: 11px;
+    line-height: 1.4;           /* 💡 複数行になったときの文字の重なりを防ぐ行高 */
+    text-shadow: 0 0 4px rgba(255,153,0,0.6);
+    transition: color 0.2s;
+        white-space: normal;        /* 💡 枠の右端に到達したら「自動で綺麗に改行」させる絶対命令 */
+    word-break: break-all;      /* 英語の長単語（O(N²)等）が来ても枠を破壊せず強制改行する規律 */
+}
+
+/* 🕶️ おまけ：スクロールバーもアンバーの景観に同化させるハック */
+.help-monitor::-webkit-scrollbar {
+    width: 4px;
+}
+.help-monitor::-webkit-scrollbar-thumb {
+    background: #ff9900;
+    border-radius: 2px;
+}
+
+
+canvas {
+    display: block;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+    background: #000;
+}
+
+/* 👑 コントロール行の整流化（1ライン化） */
+.speed-control-line {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    width: 100%;
+}
+.speed-control-line input[type="range"] {
+    flex: 1;
+    cursor: pointer;
+}
+
+/* 👑 新設：4連物理数式グリッドの整流化セクター */
+.grid-4way-line {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    width: 100%;
+}
+.grid-4way-line label {
+    width: 60px; /* RANGE: ラベルの幅を固定し他行と同期 */
+}
+.grid-4way-line .math-gate {
+    font-family: monospace;
+    font-size: 12px;
+    color: #ff8800; /* 烈火のオレンジ発光ゲート */
+    padding: 0 2px;
+}
+.grid-4way-line .split-bar {
+    color: #444;
+    font-weight: bold;
+    padding: 0 6px;
+}
+
+/* 👑 共通規律：全詳細パラメータ行の入力・ダミー枠のサイズ・高さを「24px」へ完全統治 */
+.speed-control-line input[type="number"],
+.speed-control-line .circuit-filler,
+.grid-4way-line input[type="number"] {
+    width: 65px !important;       /* 幅65pxの絶対防衛ライン */
+    height: 24px !important;      /* 高さを24pxに引き上げ、縦のガタつきを完全現行犯逮捕 */
+    text-align: right;
+    box-sizing: border-box;
+    background: #0b0d0e;
+    border: 1px solid #485058;
+    color: #ff9900;
+    font-family: 'Consolas', monospace;
+    font-size: 10px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.9);
+}
+
+/* 擬態インジケーター（TRLの末端）専用調整 */
+.speed-control-line .circuit-filler {
+    text-align: center !important;
+    background: #222;
+    border: 1px solid #444;
+    color: #ff8800;
+    font-family: monospace;
+    font-size: 11px;
+    line-height: 22px;
+    cursor: not-allowed;
+}
+
+
+  </style>
+</head>
+
+<body>
+
+<div id="topBar">
+
+ <button id="toggleLangBtn"
+        data-help-kids-ja="ことばのきりかえ：うちゅうの時計をとめないで、画面の文字を「にほんご」と「えいご」に一瞬できりかえるボタンだよ。"
+        data-help-kids-en="Language Switch: A button that instantly swaps the screen text between Japanese and English without stopping the cosmic clock!"
+        data-help-pro-ja="言語相互作用：DOMのテキストレンダリング・エンジンを切り替えます。実行中の3D物理パイプライン（重力演算）を一切停止させることなく、すべての戦術表示ラベルを言語マトリクス（日本語/英語）間で一斉置換します。"
+        data-help-pro-en="LANGUAGE INTERACTION: Toggles the DOM text rendering engine. Swaps all active telemetry labels between localization matrices (JA/EN) without interrupting the running 3D physics pipeline.">
+  Language: EN
+ </button>
+
+<button id="helpModeBtn" class="toggle-off">HELP: こども</button>
+
+ <div class="section">
+  <button id="toggleSettingsBtn" data-stage="0" type="button"
+          data-en="SYS: OFF" data-ja="システム: 全閉"
+          data-help-kids-ja="操作盤をひらく：【0 ➔ 1 ➔ 2】のじゅんばんで、画面の下側に三段階で「ひみつの設定パネル」をドクンと大きくひろげるよ。どんどんマニアックなメーターや改造レバーが飛び出してくるぞ！"
+          data-help-kids-en="PANEL INTERACTION: Cycle the control stage [0 ➔ 1 ➔ 2] to trigger a 3-step expansion of the secret config panel at the bottom of your screen! Unleash a hardcore sequence of advanced meters and cosmic hacking levers to override the laws of physics!"
+          data-help-pro-ja="操作盤幾何調律：data-stage属性を【0 ➔ 1 ➔ 2】へ巡回させ、DOMの列メッシュを動的に伸縮します。段階的に隠蔽されたテレメトリーストリームと特権演算変数を解放し、画面の「情報密度」を物理的に拡張します。"
+          data-help-pro-en="PANEL GEOMETRY MODULATION: Cycles the data-stage attribute [0 -> 1 -> 2] to dynamically scale the DOM column mesh. Step-by-step unlatches hidden telemetry streams and advanced core variables, directly increasing the informational density of your viewport.">SYS: OFF</button>
+ </div>
+
+ <div class="section"
+      data-help-kids-ja="星の数【グラフィック限界アラート】：宇宙が生まれた瞬間に、何個の星をバラまくかを決めるレバーだよ。数を増やすほど画面は超にぎやかになるぞ！もし5000個の星をまいて「軌跡（しっぽ）」を表示させると……さっきまでサクサク動いていた宇宙が、とたんにカクカクの激重モードに突入するぞ！なぜかって？星の計算は天才プログラムで一瞬で終わるけれど、画面に「何万本もの光のしっぽ」を同時に描き写すのは、パソコンのグラフィックの力が限界を迎えちゃうからんだ！物理の計算 vs 画面の絵描き、どっちが先にギブアップするかキミの目でたしかめてみよう！"
+      data-help-kids-en="BODY QTY [GRAPHICS OVERLOAD WARNING]: Sets the number of stars spawned at Genesis. Populating the cosmos creates a majestic view! But if you spawn 5000+ stars and turn Trails ON... the universe will instantly tank into lag city! Why? Because while the physics math is highly optimized, forcing the browser to rasterize hundreds of thousands of light strokes will absolutely crush your GPU layer! It's the ultimate showdown between Physics Speed vs Drawing Load—let's see which one breaks first!?"
+      data-help-pro-ja="配置天体数量：物理演算ループの開始時に、配列にパッキングされる天体の総数です。数を増やせば宇宙は賑やかになりますが、あなたのマシンのプロセッサ（CPU/GPU）が処理すべき重力相互作用の計算式も、その数の2乗（O(N²)) の速度で容赦なく増大します。"
+      data-help-pro-en="BODY COUNT: Sets the exact number of objects packed into the physics array at initialization. Increasing this filling rate populates your cosmos, but exponentially compounds the gravitational computation load (O(N²)) on your hardware.">
+  <div class="speed-control-line">
+    <label data-en="QTY:" data-ja="数量:">QTY:</label>
+    <label id="bodyCountLabel" data-en="QTY:" data-ja="数量:">300</label>
+    <input type="range" id="bodyCount" min="0" max="3000" value="300">
+    <input type="number" id="bodyCountInput" min="0" max="3000" value="300">
+  </div>
+ </div>
+
+ <div class="section vertical">
+  <button id="startBtn" class="toggle-on" data-en="RUN (Q)" data-ja="稼働 (Q)"
+          data-help-kids-ja="時間をうごかす・とめる【システムじっせき：時が凍るせかい】：宇宙の時間を一瞬でストップさせたり、また動かしたりできるよ！時間を止めている間は、すべての星の重力の引っ張り合いもピタッとフリーズするぞ。ただし、パソコンがすでに計算オーバーでパンクしかけているときは、時間を止めてもクラッシュから守ることはできないから気をつけてね。"
+          data-help-kids-en="TEMPORAL FLUX OVERRIDE [SYSTEM ACHIEVEMENT: FREEZING THE HORIZON]: Toggles the main execution register of the requestAnimationFrame loop. Freezes or thaws the integration step (Delta-t), halting the accumulation of gravitational force vectors across the active matrix instantly. Note: Halting the local time-space loop will not protect you from a critical resource starvation crash if your thread pool is already overloaded."
+          data-help-pro-ja="時間軸クロノロック【システム実績：凍りついた地平線】：メインループ（requestAnimationFrame）の実行フラグを反転させ、宇宙の時計（クロック供給）を制御します。時間歩進（Delta-t）の積算を瞬時に凍結／解放し、全重力相互作用ベクトルの物理更新を完全停止。注意：ローカルの時空ループを停止させたとしても、すでにバックグラウンドのスレッドプールが過負荷を検知している場合、システムクラッシュの運命から逃れることはできません。"
+          data-help-pro-en="TEMPORAL FLUX OVERRIDE [SYSTEM ACHIEVEMENT: FREEZING THE HORIZON]: Toggles the main execution register of the requestAnimationFrame loop. Freezes or thaws the integration step (Delta-t), halting the accumulation of gravitational force vectors across the active matrix instantly. Note: Halting the local time-space loop will not protect you from a critical resource starvation crash if your thread pool is already overloaded.">RUN (Q)</button>
+
+   <button id="resetBtn" data-en="Reset (E)" data-ja="リセット (E)"
+        data-help-kids-ja="システムエンティティパージ【システムじっせき：時空の完全消去（オールクリア）】：いま動いているすべての星のデータを、パソコンのメモリから瞬時にぜんぶ消し去って（パージ）、宇宙の座標を完全な「ゼロ」の状態にリセットするボタンだよ！そのあと、現在の設定メーターに合わせて、新しい星のあつまりをイチから再構成（スポーン）するんだ。ビッグバンみたいな宇宙の誕生じゃなくて、いまある世界をデータごと跡形もなく抹殺するから、育てていた星も「全ロス」するぞ！"
+        data-help-kids-en="SYSTEM ENTITY PURGE [SYSTEM ACHIEVEMENT: TOTAL ANNIHILATION]: Instantly flushes the active objects array to zero, wiping all localized velocity vectors from the heap memory to initialize a fresh stellar configuration. Warning: This is not a cosmic Big Bang—it is a brutal memory wipe that will completely erase your current timeline data into the void!"
+        data-help-pro-ja="システムエンティティパージ【システム実績：完全なる崩壊】：アクティブな天体配列の長さを瞬時にゼロへ切り詰め、すべての局所速度ベクトルと宇宙記録をヒープメモリから完全抹殺します。現在の制御パラメータを即座に再サンプリングし、未知の星団配置を再生成。警告：この宇宙規模の大量絶滅イベントを執行したとしても、直前のタイムラインで全ロスしたデータが手元に戻ることはありません。"
+        data-help-pro-en="SYSTEM ENTITY PURGE [SYSTEM ACHIEVEMENT: TOTAL ANNIHILATION]: Instantly truncates the active objects array to zero, wiping all localized velocity vectors and cosmic records from the heap memory. Re-polls current control parameters to instantiate a fresh stellar configuration. Warning: Invoking this cosmic extinction event will not recover any items dropped in the previous timeline..">Reset (E)</button>
+ </div>
+
+ <div id="presetPanel">
+   <button id="presetStableBtn" data-en="Stable Orbit" data-ja="安定軌道"
+        data-help-kids-ja="きれいなまるい軌道【システムじっせき：ペットにされた重力】：このボタンは、宇宙をスタートするときの設定をワンタップで呼び出す「プリセット（あらかじめ用意されたデータ）」だよ！押した瞬間に、中心の太陽のパワーにぴったり合わせて、まわりの星の「最初のダッシュスピード」を神わざレベルで自動セッティングするんだ。あとはスタートボタンを押すだけ！重力と飛びだそうとする力が完全にバランスして、きれいな丸やだ円のコースをずっと回りつづけるぞ。大爆発やガチの衝突を見たくない、平和な天体観測から始めたいキミ向けの設定データだよ！"
+        data-help-kids-en="KEPLERIAN BALANCE [SYSTEM ACHIEVEMENT: DOMESTICATED GRAVITY]: This button is a 'Preset'—a pre-configured data profile that instant-loads perfect starting variables! It instantly calibrates the initial velocity vectors to balance perfectly with the Sun's mass. Once you press RUN, physics takes over, locking the bodies into beautiful, deterministic circular paths. The perfect starting layout for peaceful observation!"
+        data-help-pro-ja="ケプラー束縛バランス【システム実績：飼い慣らされた重力】：中心天体の質量スケールに基づき、全オブジェクトの初期接線速度ベクトルを厳密に較正します。重力加速度と遠心慣性を数式（v = sqrt(GM/r)）によって完全な調律状態へ誘導。全エネルギー総和を負の領域に拘束し、演算軌道を確定論的な楕円パスへ固定します。注意：星々のカオスな衝突（システムエラー）をただ平穏に眺めたいだけの無気力な観測者に最適なプリセットです。"
+        data-help-pro-en="KEPLERIAN BALANCE [SYSTEM ACHIEVEMENT: DOMESTICATED GRAVITY]: Calibrates the initial tangent velocity vectors based on the center's specific mass scale, balancing gravitational acceleration against centrifugal inertia via v = sqrt(GM/r). Enforces a permanent negative energy state, locking the active objects into deterministic circular or elliptical paths. Recommended for operators who prefer peaceful observation over chaotic system failure.">Stable Orbit</button>
+
+   <button id="presetChaosBtn" data-en="Chaos Collapse" data-ja="カオス崩壊"
+        data-help-kids-ja="ぐちゃぐちゃ重力パニック【システムじっせき：あばれだす大宇宙】：まん中にある太陽の固定ロックをはずして、ななめにぶん投げるよ！星を守る安全バリアが消えちゃうから、星どうしが引きずりあい、ぐちゃぐちゃのうずまきになってぶつかり合うぞ。自分がつくった星系が、一瞬で大パニックになって壊れていくスリルを楽しみたいキミへ！"
+        data-help-kids-en="MOMENTUM FREE-FALL [SYSTEM ACHIEVEMENT: RELEASING THE ENTROPY]: Relinquishes the fixed coordinate constraints of the primary mass, launching it with an asymmetric velocity vector. Strips the gravitational singularity barriers via softening restrictions, forcing the multi-body array into high-eccentricity resonant spirals. Recommended for operators who find comfort in the unpredictable destruction of their own creation."
+        data-help-pro-ja="運動量自由落下【システム実績：解き放たれたエントロピー】：中心天体の絶対座標拘束を解除し、非対称な初期速度ベクトルをインジェクションします。軟化パラメータ（eps2）の制限により重力特異点の安全バリアを完全に剥ぎ取り、多体マトリクスを高離心率の共鳴螺旋へと誘導。注意：自分が丹精込めて構築した星系が、一瞬で予測不可能な破滅へと突き落とされる光景に奇妙な安らぎを感じる、異常な観測者向けのプリセットです。"
+        data-help-pro-en="MOMENTUM FREE-FALL [SYSTEM ACHIEVEMENT: RELEASING THE ENTROPY]: Relinquishes the fixed coordinate constraints of the primary mass, launching it with an asymmetric velocity vector. Strips the gravitational singularity barriers via softening restrictions, forcing the multi-body array into high-eccentricity resonant spirals. Recommended for operators who find comfort in the unpredictable destruction of their own creation.">Chaos Collapse</button>
+
+   <button id="presetScatterBtn" data-en="Scatter Test" data-ja="散乱テスト"
+        data-help-kids-ja="重力ひき裂きクラッシュ：太陽をありえない超スピードで発射して、宇宙をめちゃくちゃにするよ！ものすごい重力の力（潮汐力）で、まわりの軽い星たちが消しゴムみたいに引き裂かれ、パチンコ玉みたいに四方八方へものすごい速さですっ飛んでいきながら、細長い星のしっぽを作っていくぞ！"
+        data-help-kids-en="TIDAL DISRUPTION: Injects an unbound hyperbolic trajectory state (Total Energy E > 0) by cross-launching the primary mass at hyper-velocity (Vx = 3.5). The extreme differential gravity field physically shears the light mass array (0.1), forcing individual elements into chaotic slingshot vectors and spinning out elongated kinetic tidal tails."
+        data-help-pro-ja="潮汐力学的破壊：中心星に超高速初速（Vx = 3.5）をインジェクションし、全エネルギー総和が正（E > 0）の非束縛な双曲線軌道を強制生成します。極端な傾斜重力場が軽量天体配列（0.1）を物理的に引き裂き、各ノードに致命的なスイングバイ・ベクトルを与えて、細長く引き伸ばされた運動学的潮汐テールを虚空へ射出します。"
+        data-help-pro-en="TIDAL DISRUPTION: Injects an unbound hyperbolic trajectory state (Total Energy E > 0) by cross-launching the primary mass at hyper-velocity (Vx = 3.5). The extreme differential gravity field physically shears the light mass array (0.1), forcing individual elements into chaotic slingshot vectors and spinning out elongated kinetic tidal tails.">Scatter Test</button>
+
+   <button id="presetRenderBtn" data-en="Render Load" data-ja="描画高負荷テスト"
+        data-help-kids-ja="描画高負荷テスト【システムじっせき：パソコンの限界に挑め！】：このボタンは、キミのパソコンのグラフィックパワーを試す究キュクの「高負荷実験プリセットデータ」だよ！押した瞬間に星の数が「800個」に増えるだけでなく、彗星・惑星のすべての「しっぽ（軌跡）」、目に見えない「引力中心（重心）」、安定した「まわるイキオイの針（角運動量）」という、画面が一番重くなる5大ビジュアルメーターをすべて同時に強制オン（全点灯）にするぞ！さらに、星のバリア（軟化係数）を極限まで薄くするから、800個の星がまばゆい光の線を引いて大激突しながらぐるぐる大回転するんだ。これだけの超大盛りの絵の具を一度に塗られて、キミのパソコンの画面（FPS）はサクサクを維持できるか！？最高にまばゆい「球状星団」の誕生を見届けよう！"
+        data-help-kids-en="RENDER LOAD [HARDWARE BENCHMARK PRESET]: This button instantly triggers the ultimate graphics stress-test profile! It doesn't just spawn 800 stars—it injects a script to forcedly activate 5 heavy visual filters simultaneously: Comet Trails, Planet Trails, Sun Trails, Barycenter Markers, and Angular Momentum Vectors! By shrinking the collision safety shield (eps2 = 0.5), it forces 800 stars to trigger high-density chaotic mergers while the camera automatically spins. It's the ultimate showdown for your GPU layer—can your hardware maintain a smooth framerate under this beautiful, hyper-dense stellar storm?"
+        data-help-pro-ja="双曲線スイングバイ【システム実績：双曲線的破壊行為】：中心天体に高速な初速度ベクトルを注入し、高エネルギーの近接遭遇イベントを執行します。運動エネルギーの急激な転移により、天体の外層を長大な重力テイルとして剥離させ、双曲線軌道で虚空へとパージ。注意：引き裂かれた星々が彼方へ消え去る光景を眺めるのは、天文学的には「観測」ですが、一般的には「全ロスの見届け」と呼ばれます。"
+        data-help-pro-en="HYPERBOLIC SWING-BY [SYSTEM ACHIEVEMENT: HYPERBOLIC VANDALISM]: Injects a high-velocity vector into the primary mass to trigger a high-energy close encounter. Strips stellar envelopes into elongated gravitational tails through rapid kinetic energy transfer, ejecting entities into hyperbolic trajectories. Note: Watching your star system get shredded into the infinite void is technically 'science,' even if it looks like a total disaster.">Render Load</button>
+      <button id="btnOrbitCam" class="toggle-off"
+        data-en="ORBIT" data-ja="周回"
+        data-help-kids-ja="のりものカメラ【システムじっせき：逃げる星をおいかけろ】：カメラの目を太陽からはずして、宇宙を走りまわるちいさな星のひとつの「背中」にガチッと乗りうつらせるよ！ジェットコースターみたいにグワングワンうごく大迫力のカメラモードだよ。カメラを元に戻すときは、画面がチカチカしないように、これまでの線をきれいにリフレッシュ（記憶消去）するぞ。注意：あまりに見つめすぎると、3D画面酔いでホンモノのめまいがするから気をつけて！"
+        data-help-kids-en="ON-BOARD PERSPECTIVE INTERCEPT [SYSTEM ACHIEVEMENT: TRACKING THE FUGITIVE]: Forces the camera matrix to anchor directly onto the relative coordinate index of the first active minor node. Bypasses the central solar viewpoint to lock the observer into a dynamic tracking mode, while flashing all visual vector histories upon deactivation to clear dimensional remnants. Note: Tethering your eyes to a tiny rock heading toward a black hole is a guaranteed way to induce motion sickness."
+        data-help-pro-ja="車載視点局所インターセプト【システム実績：逃亡者の追跡】：カメラ行列の注視点を中心星から強制パージし、最初に見つかったマイナー天体ノードの局所座標インデックスへ直結させます。主客を逆転させたダイナミックな追尾モードを執行し、解除時には次元の残像（描画バグ）を防ぐため全天体の軌跡履歴を一斉にフラッシュ（記憶消去）。注意：ブラックホールへ自由落下していく微小な岩石に視界を同期させる行為は、観測者の三半規管に深刻な過負荷（画面酔い）を与えます。"
+        data-help-pro-en="ON-BOARD PERSPECTIVE INTERCEPT [SYSTEM ACHIEVEMENT: TRACKING THE FUGITIVE]: Forces the camera matrix to anchor directly onto the relative coordinate index of the first active minor node. Bypasses the central solar viewpoint to lock the observer into a dynamic tracking mode, while flashing all visual vector histories upon deactivation to clear dimensional remnants. Note: Tethering your eyes to a tiny rock heading toward a black hole is a guaranteed way to induce motion sickness.">ORBIT</button>
+ </div>
+
+ <div class="section"
+      data-help-kids-ja="宇宙の中心（じゅうしん）マーク：宇宙でいちばん重い2つの星を自動で見つけだして、その2つの星の「ほんとうの引力の中心（重さのバランスポイント）」をリアルタイムで計算してマークをつけるよ。星と星のあいだの何もない「からっぽの空間」にある、ふだんは絶対に見えない【宇宙のバランスの軸】が、画面の中にババーンと丸見えになるぞ！"
+      data-help-kids-en="BARYCENTRIC POINT COMPUTATION: Dynamically executes the two-body vector weighted average equation every frame based on the top-2 sorting mass nodes. Instantiates and aligns a visual transform marker directly at the localized gravitational center of mass, exposing the invisible geometric focal point of the local binary subsystem."
+      data-help-pro-ja="バリセンター固有座標演算：質量上位2基のソートノードをサンプリングし、2天体間のベクトル重み付き平均方程式（内分点数式）を毎フレーム動的に執行します。虚空に実在する力学的な引力中心（重心）の局所座標を算出し、3D変換マーカーの配置を強制同期させることで、連星系が共有する「不可視の幾何学的焦点」を白日の下に晒します。"
+      data-help-en="BARYCENTRIC POINT COMPUTATION: Dynamically executes the two-body vector weighted average equation every frame based on the top-2 sorting mass nodes. Instantiates and aligns a visual transform marker directly at the localized gravitational center of mass, exposing the invisible geometric focal point of the local binary subsystem.">
+  <button id="toggleBaryBtn" class="toggle-off" data-en="BARY" data-ja="重心">BARY</button>
+</div>
+
+ <button id="toggle-momentum-btn" class="toggle-off"
+        data-en="L-VEC" data-ja="角運動量"
+        data-help-kids-ja="まわるイキオイの針【システムじっせき：見えない回転のじく】：星が「どれだけのスピード（速度）」で、「どのくらい斜めに傾いて（軌道面）」まわっているかを同時にあらわす魔法の針（角運動量ベクトル）だよ！星が加速したり、太陽にちかづいてブンッと勢いよくまわるほど、針がピキーンと長くのびるんだ。さらに、星がまわっている「平らなステージ（軌道面）」に対して、この針はいつでも【真上（90度）】に向かって垂直に直立する性質をもっているぞ！つまり、バラバラな方向をむいた針の長さと傾きをみるだけで、星のスピードと軌道の傾きがすべて一目でわかるんだ。"
+        data-help-kids-en="ANGULAR MOMENTUM PROJECTOR [THE VISUAL PHYSICS AXIS]: This magic arrow visualizes both the 'orbital speed' and 'tilt angle' of a star simultaneously! As the body accelerates or flies through a close swing-by, the vector needle shoots up in real-time. Crucially, this needle always points exactly perpendicular (90 degrees) to the star's flat orbital plane! By reading the length and tilt of these arrows, you can instantly audit the velocity and inclination of every cluster node at a single glance."
+        data-help-pro-ja="総角運動量ベクトル射影【システム実績：可視化された不可視の軸】：全天体の「相対位置×相対速度」の外積演算（L = r × v）を毎フレーム執行し、不変 of 3次元回転軸を算出します。カスタム投影マトリクスを介して2D Canvasの座標系へ平行投影し、生々しいインジケーター線としてストローク描画。注意：画面上に目に見える物理の境界線（デバッグ表示）を出しておかないと、精神的な安定を保てない重度のデータ中毒者向けの機能です。"
+        data-help-pro-en="ANGULAR MOMENTUM PROJECTOR [SYSTEM ACHIEVEMENT: REVEALING THE HIDDEN AXIS]: Executes an outer cross-product vector sum (L = r × v) for active entities every frame. Maps this 3D rotation axis directly to the 2D Canvas buffer via the custom projection matrix, rendering a raw telemetry stroke to verify the conservation law. Recommended for operators who cannot feel secure without visible physics boundaries.">L-VEC</button>
+
+ <div class="section">
+  <button id="cometTrailBtn" class="toggle-off" data-en="CMT I" data-ja="彗星 I"
+          data-help-kids-ja="ほうき星のコース表示：おっぽを引いて走る「ほうき星（彗星）」が、むかしうごいた『過去のコース（軌跡）』を画面に描き加えるボタンだよ！※太陽に近づいたときに、太陽とぎゃくの方向へリアルタイムに吹きだす「ガスとチリの白いしっぽ（尾）」は、このボタンがオフでも太陽に近づけばいつでも自動で大はしゃぎで吹き出すぞ！２つのちがうしっぽを観察してみよう！"
+          data-help-kids-en="COMET GRAPHICS FILTER: Evaluates the specific body-type flag in the object heap during the rendering pass. Skips the stroke subroutines for all other nodes, constraining the history buffer lines exclusively to designated long-period cometary vectors."
+          data-help-pro-ja="彗星軌跡条件抽出：レンダリングパスにおいて、天体ヒープ内の特定の型フラグを動的に評価します。他ノードの線分描画サブルーチンを容赦なく全スキップ（パージ）し、履歴バッファの描画執行を長周期の彗星ベクトルだけに完全限定（フィルタリング）します。"
+          data-help-pro-en="COMET GRAPHICS FILTER: Evaluates the specific body-type flag in the object heap during the rendering pass. Skips the stroke subroutines for all other nodes, constraining the history buffer lines exclusively to designated long-period cometary vectors.">彗星 I</button>
+  <button id="planetTrailBtn" class="toggle-off" data-en="PLN O" data-ja="惑星 O"
+          data-help-kids-ja="子分の星のしっぽ表示：太陽のまわりをまわっている子分の星（惑星や小惑星）たちがうごいた線（軌跡）を画面に描き加えるボタンだよ！ほうき星のスイッチなど、ほかの軌跡ボタンと自由に組み合わせて、何層もの光の輪を重ねて楽しむことができるぞ！"
+          data-help-kids-en="PLANETARY PARENT CONDITIONAL: Intercepts the iterative loop of the canvas stroke routine. By evaluating individual body attributes, it filters out the central mass and cometary fragments, rendering line steps solely for ordinary orbital object vertices."
+          data-help-pro-ja="一般天体軌跡条件抽出：キャンバスの線分描画ルーチンの反復（ループ）へ割り込みします。個々の天体属性を評価し、中心星および彗星破片の描画パスをフィルタリング（除外）することで、中間質量の一般天体（Obj）の頂点データだけをCanvas上に接続・抽出します。"
+          data-help-pro-en="PLANETARY PARENT CONDITIONAL: Intercepts the iterative loop of the canvas stroke routine. By evaluating individual body attributes, it filters out the central mass and cometary fragments, rendering line steps solely for ordinary orbital object vertices.">惑星 O</button>
+  <button id="sunTrailBtn" class="toggle-off" data-en="SUN P" data-ja="太陽 P"
+          data-help-kids-ja="太陽のあしあと表示：どっしり重い「まん中の太陽」が、宇宙空間をゆらゆらどう動いたか、その足あと（軌跡の線）を画面に描き加えるボタンだよ！★【超重要・伝説の裏ワザコマンド】：実は、このボタンを押しただけでは太陽の足あとは出現しないんだ。この宇宙をつくった天才プログラマー（キミ）のバグをついた、ひみつの隠しコマンドを教えよう。【手順1】そうさばんの下側にある「太陽 初期速度(X)」のつまみを、マウスで一回「カチリ」とクリックする。【手順2】画面上の「AUTO（自動回転）」ボタンを押して、カメラをぐるぐる回す。この２つの儀式を成功させた瞬間、封印がとかれて太陽の大漂流の足あとが画面にピキーンと出現するぞ！ハッカーだけが知っているひみつの裏ワザを成功させよう！"
+          data-help-kids-en="PRIMARY MASS PATH ISOLATION: A sub-layer switch to render the horizontal and vertical drift vector lines of the heavy central star! ★[LEGENDARY HACKER CHEAT CODE]: Due to a classified memory lag mystery, clicking this button alone won't spawn the Sun's trail. You must execute a 2-step secret glitch command to unlock it! (Step 1) Go to the bottom panel and click once ('CLICCK!') on the 'Sun Velocity (X)' slider. (Step 2) Press the 'AUTO' rotate camera button to start spinning the universe! Once this sacred cyber-ritual is complete, the ancient seal will break, and the drifting footprint of the primary sun will pierce through the Canvas matrix! Can you pull off this secret hacker trick?"
+          data-help-pro-ja="主質量中心軌跡隔離：描画ステートを中心質量座標（Sun）を保持する特定インデックスにのみ直結させます。残りの膨大な天体要素に対する座標配列の線分生成をすべて強制中断（アボート）し、重い中心星だけの単一の「漂流ベクトル」を厳密に追跡します。"
+          data-help-pro-en="PRIMARY MASS PATH ISOLATION: Locks the drawing state directly to the index containing the dominant coordinate variables. Aborts coordinate array line-generation for the other 799 elements, strictly tracking the drift vector of the heavy central star alone.">太陽 P</button>
+ </div>
+
+ <div class="section">
+  <button id="showNames" class="toggle-off" data-en="NAME N" data-ja="名前 N"
+          data-help-kids-ja="星の名前とスピード表示：いま生きているすべての星のよこに、「星のなまえ」と「いまのスピードの数値」をドッキングさせて文字として表示するよ！毎フレーム、何百回も文字データを画面へ力まかせにスタンプするから、ハッカーのパソコンっぽくなってめちゃくちゃカッコいいぞ！"
+          data-help-kids-en="DYNAMIC BITMAP RASTERIZATION: Iterates through the active body indices to concatenate raw string variables (Identifier & Instantaneous Velocity Magnitude). Directly invokes the ctx.fillText rendering pipeline at each local coordinate, forcedly rasterizing hundreds of textual metadata blocks into the 2D Canvas buffer every single frame."
+          data-help-pro-ja="動的ビットマップ・ラスタライズ：現在アクティブな全天体インデックスを走査し、生（なま）の「識別文字列」と「瞬時速度ベクトル絶対値」を変数結合（コンカティネート）します。各局所座標の直上に対して ctx.fillText レンダリングパイプラインを直接召喚（インボーク）し、毎フレーム数百回、テクスチャ化されていない生の文字メタデータブロックを2D Canvasバッファ内へ力まかせに強制上書きラスタライズします。"
+          data-help-pro-en="DYNAMIC BITMAP RASTERIZATION: Iterates through the active body indices to concatenate raw string variables (Identifier & Instantaneous Velocity Magnitude). Directly invokes the ctx.fillText rendering pipeline at each local coordinate, forcedly rasterizing hundreds of textual metadata blocks into the 2D Canvas buffer every single frame.">NAME N</button>
+ </div>
+
+<button id="triggerGoliathBtn" type="button" class="toggle-off"
+        data-en="SUN II" data-ja="第二 of 太陽"
+        data-help-kids-ja="第二の太陽（ゴリアテ）投入【システムじっせき：太陽のバトルロイヤル】：いまの中心にある太陽と【まったく同じ重さ】を持った、双子の兄弟星「Goliath（ゴリアテ）」を、宇宙の別の場所に召喚（インジェクション）するボタンだよ！★【キミだけに教える極秘の裏仕様】：実はこのボタン……何回でも押せて、宇宙に【いくつでも太陽を出現させられる】んだ！連打すればするほど、太陽と対等な力を持った大ボスたちが画面だらけになって、お互いのものすごい引力で激しくぶつかり合うぞ！すべての惑星を木っ端微塵に巻き込む「太陽だらけのバトルロイヤル」、キミは何連打まで耐えられるか試してみる？"
+        data-help-kids-en="SUPERMASSIVE NODE INJECTION [THE SUN BATTLE ROYALE]: Instantiates 'Goliath'—a binary sibling star that is an exact data copy of the primary Sun, with the [EXACT SAME MASS]! ★[CLASSIFIED MULTI-SPAWN GLITCH]: Here is a secret just for you: this button has NO limits! You can click it infinitely to spawn [AS MANY SUNS AS YOU WANT]! Smash this button to flood the Canvas with equal cosmic giants, triggering a chaotic gravity wrestling match that shatters every orbital rule. How many suns can your cluster handle before total collapse?"
+        data-help-pro-ja="超質量ノード強制注入：中心星の質量スケールを遥かに凌駕する狂気の特異点「Goliath」を、オブジェクト配列へ直接インスタンス化（インジェクション）します。天体天球内の全質量バランスを力まかせに上書き（オーバーライト）することで、共通重心（バリセンター）を自身の座標へ暴力的に牽引。全系の相空間（フェーズスペース）を強制遷移させ、周回するすべての軽量ノードの速度ベクトルを幾何学的にへし折ります。"
+        data-help-pro-en="SUPERMASSIVE NODE INJECTION: Instantiates a rogue gravitational singularity 'Goliath' directly into the memory heap. By over-writing the sector mass scale with an astronomical mass value, it violently drags the common barycenter, forces immediate chaotic phase space transitions, and mechanically shears the velocity vectors of all lesser array elements.">SUN II</button>
+
+<div class="control-group"
+     data-help-kids-ja="宇宙カメラ回転スピード：つまみを右にうごかすほど、宇宙をみつめるカメラのまわるスピード（角速度）がアップするよ！最大にすると、ありえない超スピードで世界がぐるぐる大回転して、まるでキミ自身が宇宙の激しい渦巻きの中にビューンと飛び込んでいくような、ものすごいスピード感を味わえるぞ！"
+     data-help-kids-en="ANGULAR VELOCITY STEP GAIN: Scales the speed of the spinning camera view! Crank it to the absolute maximum to make the universe spin at hyper-velocity, giving you an insane, high-speed cosmic warp experience as you dive into the center of the cluster!"
+     data-help-pro-ja="角速度ステップ・ゲイン：入力ノードから0.0〜0.05の浮動小数点スカラーをサンプリングし、毎フレームの座標インクリメント（変位ステップ値）へダイレクトに結合します。この値を引き上げるほど、描画更新（rAF）ごとに加算される方位角ラジアン（Delta-theta）が倍加し、2Dキャンバス上の擬似3D座標変換行列（ビューマトリクス）を狂暴な速度で強制回転変調（ディストーション）させます。"
+     data-help-pro-en="ANGULAR VELOCITY STEP GAIN: Samples a floating-point scalar [0.0 to 0.05] from the input node to directly scale the frame-by-frame coordinate increment. Elevating this value compounds the angular displacement (Delta-theta) per rendering tick, mechanically forcing the 2D spatial transformation to warp the observer's viewing matrix at hyper-velocity.">
+  <div class="speed-control-line">
+    <button id="btnToggleRotate" class="toggle-off" data-en="AUTO" data-ja="自動">AUTO</button>
+    <input type="range" id="cameraRotateSpeed" min="0" max="0.05" step="any" value="0.001">
+    <input type="number" id="rotateSpeedInput" min="0" max="0.05" step="any" value="0.001">
+  </div>
+</div>
+
+ <div class="section" id="cameraPresetSection"
+      data-help-kids-ja="カメラアングルの瞬間ワープ【システムじっせき：視点の瞬間移動】：宇宙をみつめるカメラの角度を、おすすめの３つのアングルへ一瞬でテレポート（ワープ）させるボタンだよ！あまりのすごさに目がまわるかもしれないけれど、このボタンはキミが何百回、ものすごい速さで連打しても、絶対にバグったり壊れたりしない無敵のプログラムで作られているから安心していろんなアングルをパチチ切り替えて遊んでみてね！"
+      data-help-kids-en="VIEWPORT VECTOR OVERWRITE [THE INSTANT TELEPORT]: Instantly warps your camera matrix to one of three optimized geometric perspectives! While the rapid shift might make your head spin, this system is built with bulletproof code—meaning you can spam and mash these view buttons as fast as you can, and the rendering engine will never glitch or crash! Switch between dimensions with absolute confidence!"
+      data-help-pro-ja="視点行列変数強制上書き【システム実績：認識的めまい】：観測空間の方位角・仰角変数を特定の幾何学的固定値へ瞬時に上書き（オーバーライト）し、2D Canvasバッファ全体の二次元射影マトリクスを一瞬で相転移させます。注意：これらの異なる次元パースペクティブを高速で巡回（連打）した場合、システムの描画レイヤーが同期不全を起こすか、あるいはオペレーターの三半規管が物理的にクラッシュ（3D酔い）します。"
+      data-help-pro-en="VIEWPORT VECTOR OVERWRITE [SYSTEM ACHIEVEMENT: THE COGNITIVE VERTIGO]: Executes instantaneous real-time matrix alignment for equatorial, polar, or isometric perspectives. Overrides active angular variables to force an immediate coordinate re-projection across the 2D Canvas buffer. Note: Rapid cycling through these dimensional perspectives may cause temporary hardware layer desynchronization or operator disorientation.">
+
+    <label data-en="VIEW:" data-ja="視点:">VIEW:</label>
+
+  <button id="camEquatorBtn" data-en="Equator" data-ja="赤道面"
+        data-help-kids-ja="まよこビュー【システムじっせき：100億年の銀河の歴史】：カメラの高さを「0」にして、星がまわっている立体的な宇宙を「真よこ」から見るアングルだよ。生まれたばかりの宇宙は、星の軌道が上下にバラバラに飛び交っているんだ。これが、お互いの重力で何百億回もぶつかり合い、引きづり合うことで、気が遠くなるような時間をかけて、だんだんと平らな１本の「銀河の円盤」へと形を変えていくんだぞ！いま真よこから見てバラバラな星たちが、完全に水平にそろう姿を見るためには、このシミュレーターを【100億年】くらい走らせる必要があるかもしれないんだ。大宇宙の歴史のスタートラインを、この真よこから目撃しよう！"
+        data-help-kids-en="EQUATORIAL PLANE INTERCEPT [THE 10-BILLION-YEAR GALACTIC EPOCH]: Locks the camera elevation at exact zero radians, aligning your viewport parallel to the orbital disk to view the 3D cluster from the exact side! In a young universe, star orbits are scattered chaotically up and down. Over billions of years, dynamic collisions and gravitational friction slowly flatten them into a single horizontal galactic plane! To actually watch these messy, scattered nodes sync up into a perfectly straight line, you might need to run this simulation for [10 BILLION YEARS]! Look from the side to witness the raw, unpolished baseline of cosmic evolution!"
+        data-help-pro-ja="赤道面位相インターセプト【システム実績：無気力な観測者】：カメラの仰角（ピッチ）テンソルを「厳密な0ラジアン」へ強制ロックし、視点を天体の軌道円盤と完全平行にアライメントします。多数の天体が織りなすN体運動の奥行きを一本の水平な座標線へと完全に圧縮。軌道の立体的なノイズを排除し、星系の同一平面性を監査するためのビューです。注意：この静止した直線を何時間凝視し続けても、宇宙の物理的な進化速度が上がることはありません。"
+        data-help-pro-en="EQUATORIAL PLANE INTERCEPT [SYSTEM ACHIEVEMENT: THE LAZY OBSERVER]: Locks the camera elevation tensor at exact zero radians, aligning the viewport parallel to the orbital disk. Compresses the N-body depth field into a single horizontal coordinate baseline. Ideal for monitoring the system's geometric coplanarity without orbital noise. Note: Staring at this static line for consecutive hours will not accelerate the physical evolution of the universe.">Equator</button>
+
+   <button id="camPolarBtn" data-en="Polar" data-ja="極域"
+        data-help-kids-ja="まうえ北極ビュー【システムじっせき：宇宙のたからさがし】：太陽の「真上（北極）」のてっぺんから、宇宙をペチャンコに見下ろすアングルだよ。さっきの「まよこビュー」では上下にバラバラでぐちゃぐちゃに見えた星たちも、このボタンで真上から見下ろした瞬間……実は太陽を中心に、きれいな同心円（ノートにコンパスで描いた丸）を描いてビューンと回っている星（オブジェクト）たちをたくさん発見できるぞ！アングルを切り替えるだけで、バラバラなカオスのなかに隠された「宇宙のきれいなきまり」が一瞬で見つかる、最高にスカッとする天体観測ビューだよ！"
+        data-help-kids-en="POLAR AXIS ENFORCEMENT [SYSTEM ACHIEVEMENT: FLAT SPACE CONSPIRACY]: Clamps the elevation parameter to the absolute limit of PI/2 radians, locking the observer directly onto the central rotational vector. Compresses the 3D cosmic grid into a top-down 2D geometric mesh. Recommended for verifying the orbital concentricity of your minor bodies. Note: Proving that the planetary system is flat will not grant you any extra exploration points."
+        data-help-pro-ja="極域軸強制アライメント【システム実績：平坦な宇宙の陰謀】：仰角パラメータを「厳密なPI/2ラジアン」の極限境界値へクランプし、観測者の視点を中心星の回転軸真上へ完全ロックします。三次元の立体宇宙を真上からの二次元幾何学メッシュへと一方的に圧縮。天体群の軌道が描く同心円性を監査するためのビューです。注意：星系が完全に平坦であることを証明したとしても、システムからボーナス経験値が与えられることはありません。"
+        data-help-pro-en="POLAR AXIS ENFORCEMENT [SYSTEM ACHIEVEMENT: FLAT SPACE CONSPIRACY]: Clamps the elevation parameter to the absolute limit of PI/2 radians, locking the observer directly onto the central rotational vector. Compresses the 3D cosmic grid into a top-down 2D geometric mesh. Recommended for verifying the orbital concentricity of your minor bodies. Note: Proving that the planetary system is flat will not grant you any extra exploration points.">Polar</button>
+
+   <button id="camOverviewBtn" data-en="Overview" data-ja="全体俯瞰"
+        data-help-kids-ja="ななめ立体ビュー【システムじっせき：宇宙のジオラマ】：ななめ45度の上空から、宇宙全体をかっこよく立体的に見おろす1番人気のカメラだよ。はげしい重力の嵐が、まるで手体サイズのかわいいミニチュア模型（ジオラマ）みたいに安全に観察できるんだ。むずかしい数字よりも、星たちの幾何学アートを楽しみたいキミにぴったり！"
+        data-help-kids-en="OVERVIEW TENSOR MATRIX [SYSTEM ACHIEVEMENT: CELESTIAL DIORAMA]: Injects symmetrical intermediate phase offsets into both the azimuth and elevation vectors while scaling down the zoom factor. Establishes a high-altitude tracking perspective, transforming the chaotic N-body gravitational storm into a safely observable miniature model. Recommended for operators who prefer aesthetics over raw numerical grid data."
+        data-help-pro-ja="全体俯瞰テンソルマトリクス【システム実績：天体模型の鑑賞者】：方位角・仰角の双方のベクトルに対称な中間位相オフセットを注入しつつ、ズームファクターを動的にスケールダウンします。高高度からのアイソメトリック追尾パースペクティブを構築し、混沌としたN体引力の嵐を「安全に観察可能なミニチュア模型」へと変換。生データよりも、星々が織りなす幾何学的な美の調和を愛するオペレーター向けのビューです。"
+        data-help-pro-en="OVERVIEW TENSOR MATRIX [SYSTEM ACHIEVEMENT: CELESTIAL DIORAMA]: Injects symmetrical intermediate phase offsets into both the azimuth and elevation vectors while scaling down the zoom factor. Establishes a high-altitude tracking perspective, transforming the chaotic N-body gravitational storm into a safely observable miniature model. Recommended for operators who prefer aesthetics over raw numerical grid data.">Overview</button>
+ </div>
+
+<div class="control-column third-column">
+  <div class="section help-stream-container">
+    <div class="help-monitor">
+      <div id="helpText"
+           data-help-kids-ja="システム正常：ボタンやレバーにマウスをあてると、ここにひみつの説明テキストがリアルタイムで流れるよ！"
+           data-help-kids-en="CONSOLE ONLINE: Hover mouse cursor over telemetry components to stream subsystem data."
+           data-help-pro-ja="システム正常：各コンポーネントにカーソルを重ねると、ここに詳細な物理仕様ストリームが流れます。"
+           data-help-pro-en="CONSOLE ONLINE: Hover mouse cursor over telemetry components to stream subsystem data.">
+        システム正常：各コンポーネントにカーソルを重ねると、ここに詳細な物理仕様ストリームが流れます。
+      </div>
+    </div>
+  </div>
+</div>
+
+  <div id="settingsPanel" class="settings-panel" data-stage="0">
+
+  <div class="section"
+       data-help-kids-ja="重力の強さ（G）：宇宙の「万有引力」のパワーを直接アップさせる、危険な魔王のレバーだよ！このメーターを上げるほど星の引っ張りあう力が何倍にもなり、星の回るコースがギュギュッと小さくなってスピードが爆発！星たちが太陽にものすごい速さでドカンと墜落するか、パチンコ加速で宇宙の彼方へ吹き飛んでいくぞ！"
+       data-help-kids-en="GRAVITATIONAL SCALAR AMPLIFIER: Directly scales the dimensionless coefficient multiplied into the numerator of the N-body acceleration equations. Elevating this slider forces an immediate contraction of the system's orbital radii, violently escalating dynamic velocity vectors and driving lesser node indices into extreme close-encounter regimes."
+       data-help-pro-ja="重力場スカラー増幅器：多体問題の加速度方程式において、分子の質量積に直接乗算される無次元の係数（Gスケール）を変調します。この値を引き上げるほど、系全体の軌道半径が力まかせに収縮し、各天体の速度ベクトルが爆発的に増幅。軽量ノード群を中心星の局所ピクセルへと猛スピードで墜落させるか、あるいは超高速スイングバイで系外へと強制パージします。"
+       data-help-pro-en="GRAVITATIONAL SCALAR AMPLIFIER: Directly scales the dimensionless coefficient multiplied into the numerator of the N-body acceleration equations. Elevating this slider forces an immediate contraction of the system's orbital radii, violently escalating dynamic velocity vectors and driving lesser node indices into extreme close-encounter regimes.">
+  <label><span data-en="gravitySlider:" data-ja="万有引力定数 (G):">gravitySlider:</span>
+    <input type="range" id="gravitySlider" min="0.1" max="3" step="0.1" value="1">
+    <input type="number" id="gravityInput" min="0.1" max="3" step="0.1" value="1">
+  </label>
+</div>
+
+   <div class="section"
+        data-help-kids-ja="生まれたときの星のスピード：新しく生まれた星が、最初にもっている「横ダッシュのスピード倍率」をかえるよ。この数値をゼロに近づけると、星は慣性をうしなって太陽にまっさかさまに自由落下（デスダイブ）し、数値を最大にすると、宇宙の脱出速度を突破して、生まれた瞬間に画面の外へハイパー迷子（ロスト）になっちゃうぞ！"
+        data-help-kids-en="INITIAL VELOCITY SCALAR COEFF: Directly scales the scalar coefficient applied to the tangential orbital velocity vector calculated during instantiation. Setting this buffer low forces immediate gravitational collapse into the primary mass node, while maximizing it drives the initial kinetic energy past escape velocity, causing instant frame-out boundary loss."
+        data-help-pro-ja="初期速度スカラー係数：天体の実体化（インスタンス生成）時に算出される「接線方向の円軌道理論速度ベクトル」へ直に乗算するスカラー係数を変調します。この数値を絞るほど、新規ノードは慣性を奪われ中心星ピクセルへと即座に自由落下（デスダイブ）し、最大化するほど初期運動エネルギーが脱出速度を突破して、生成直後にキャンバス描画境界外へ強制フレームアウト（ロスト）します。"
+        data-help-pro-en="INITIAL VELOCITY SCALAR COEFF: Directly scales the scalar coefficient applied to the tangential orbital velocity vector calculated during instantiation. Setting this buffer low forces immediate gravitational collapse into the primary mass node, while maximizing it drives the initial kinetic energy past escape velocity, causing instant frame-out boundary loss.">
+  <label><span data-en="spawnVelSlider:" data-ja="初期天体速度倍率:">spawnVelSlider:</span>
+    <input type="range" id="spawnVelSlider" min="0.1" max="3" step="0.1" value="1">
+    <input type="number" id="spawnVelInput" min="0.1" max="3" step="0.1" value="1">
+  </label>
+</div>
+
+   <div class="section"
+        data-help-kids-ja="しっぽ（軌跡）の長さ：星がうごいたあとに残る、過去の足あとライン（軌跡バッファ）の最大ボリュームを伸縮させるよ。このレバーを右に引っ張るほど、星がものすごく長ーいしっぽを引きずるようになって美しいけれど、パソコンのメモリをたくさん使うから、線の引きすぎには注意してね！"
+        data-help-kids-en="MEMORY BUFFER CAPACITY ALLOCATION: Dynamically resizes the maximum allocation limit of the coordinate ring-buffer array inside the object heap. Expanding this coefficient scales the historical vertex matrix depth, multiplying the canvas stroke loop execution count per frame and directly forcing increased JavaScript heap memory retention."
+        data-help-pro-ja="履歴配列容量アロケーション：天体オブジェクト内のメモリヒープに確保された、過去座標リングバッファ配列の最大許容サイズ（容量）を動的に伸縮させます。この係数を引き上げるほど、時系列マトリクスの保持深度が拡張され、長大な軌跡を描画するためのフレームごとの反復描画ループ（ctx.lineTo）の執行回数が爆発的に乗算されます。"
+        data-help-pro-ja-en="MEMORY BUFFER CAPACITY ALLOCATION: Dynamically resizes the maximum allocation limit of the coordinate ring-buffer array inside the object heap. Expanding this coefficient scales the historical vertex matrix depth, multiplying the canvas stroke loop execution count per frame and directly forcing increased JavaScript heap memory retention.">
+  <label><span data-en="trailLenSlider:" data-ja="軌跡ラインの長さ:">trailLenSlider:</span>
+    <input type="range" id="trailLenSlider" min="0.1" max="3" step="0.1" value="0.5">
+  </label>
+</div>
+
+  <div class="section"
+       data-help-kids-ja="星が生まれるエリアの広さ：新しくリセットして宇宙をつくるときに、星の「重さのミニマムとマックス」、そして太陽からの「きょりのちかさと遠さ」の限界ルールを設定するよ。プログラムの【擬似乱数（Math.random）アルゴリズム】が、キミの決めたこの数値の範囲のなかだけで確率のサイコロを振って星を配置（マッピング）してくれるから、大宇宙の密集度を思いどおりにコントロールできるぞ！"
+       data-help-kids-en="ALGORITHMIC INITIALIZATION ENVELOPE: Configures the strict mathematical boundary constraints for mass fields and radial distance vectors! Surrendering to no gods, the system's pseudo-random number generator (Math.min/max algorithms) maps raw probability data down to your localized closed intervals—giving you absolute control over the density and distribution of the cosmos!"
+       data-help-pro-ja="アルゴリズム初期配置境界エンベロープ：天体配列の生成ルーチンにおいて、各インスタンスに割り当てられる質量スカラーおよび極座標半径ベクトルの厳密な数理的境界制約（閉区間）を設定します。擬似乱数ストリーム（Math.random）を指定された領域内へと動的に線形マッピングすることで、2D Canvas上に実体化される多体マトリクスの空間密度と初期質量分布の物理的限界値を強制調律します。"
+       data-help-pro-en="ALGORITHMIC INITIALIZATION ENVELOPE: Configures the strict mathematical boundary constraints [Min/Max] for mass fields and radial distance vectors. During sector population routines, these parameters map pseudo-random scalar streams down to localized closed intervals, dictating the exact spatial density and mass distribution of the instantiated array.">
+  <div class="grid-4way-line">
+    <label data-en="RANGE:" data-ja="生成領域:">RANGE:</label>
+    <input type="number" id="spawnMinMass" min="0.1" max="200" step="0.1" value="0.1">
+    <span class="math-gate">≤ M ≤</span>
+    <input type="number" id="spawnMaxMass" min="0.1" max="200" step="0.1" value="5.0">
+    <span class="split-bar">|</span>
+    <input type="number" id="spawnMinDist" min="50" max="5000" step="50" value="300">
+    <span class="math-gate">≤ R ≤</span>
+    <input type="number" id="spawnMaxDist" min="50" max="5000" step="50" value="1200">
+  </div>
+</div>
+
+  <div class="section"
+       data-help-kids-ja="パソコンまもりバリア（軟化係数）：星と星が「0センチ」の完全ゼロ距離でピッタリ重なったとき、割り算の分母がゼロになって宇宙の計算メーターがエラーで即死クラッシュするのを防ぐ「数理バリア（クッション）」の厚みだよ。このバッファ（EPS²）を仕込んでおくことで、星がぶつかっても宇宙がバグらずに安全にすり抜けられるぞ！"
+       data-help-kids-en="HARDWARE LIMITER & NUMERICAL SHIELD: Configures the O(N²) array index calculation cutoff to cap maximum CPU thread execution times. Simultaneously injects a non-zero displacement buffer (epsilon²) into the gravitational denominator matrix, mechanically suppressing zero-division runtime exceptions during direct point-mass grid overlaps."
+       data-help-pro-ja="ハードウェアリミッター＆数理的防御壁：O(N²)の総当たり計算ループに対して配列インデックスの打ち切り限界を強制執行し、CPUスレッドの実行時間を物理的に制限します。同時に、重力方程式の分母行列へ非ゼロの変位バッファ（epsilon²）を強制注入することで、点質量ノードが完全に重複した際の「ゼロ除算（ゼロディビジョン）によるランタイム例外即死クラッシュ」を機械的に完全鎮圧します。"
+       data-help-pro-en="HARDWARE LIMITER & NUMERICAL SHIELD: Configures the O(N²) array index calculation cutoff to cap maximum CPU thread execution times. Simultaneously injects a non-zero displacement buffer (epsilon²) into the gravitational denominator matrix, mechanically suppressing zero-division runtime exceptions during direct point-mass grid overlaps.">
+  <div class="speed-control-line">
+    <label data-en="N-BODY:" data-ja="演算上限:">N-BODY:</label>
+    <input type="number" id="nbodyThreshold" min="50" max="2000" step="10" value="150">
+    <label data-en="EPS²:" data-ja="軟化係数:">EPS²:</label>
+    <input type="number" id="eps2Input" min="0" max="200" step="1" value="64">
+  </div>
+</div>
+
+    <div id="sunControlBlock">
+     <div class="speed-control-line"
+          data-help-kids-ja="太陽の重さ（質量）：まん中にあるボス星（インデックス0番）の重さをメモリのなかで直接書きかえるよ！この数値を最大パワーまで引き上げるほど、太陽の引力がブラックホール並みのモンスターになって、すべてのまわりの星の安定軌道が一瞬でぶっ壊れ、中心へむかって一斉に自由落下デスダイブをはじめるぞ！"
+          data-help-kids-en="PRIMARY SINGULARITY MASS COEFFICIENT: Directly overwrites the static mass scalar assigned to the central mass node (Index 0). Maximizing this register forcefully amplifies the numerator of the overarching acceleration matrix, instantly destabilizing all Keplerian boundary states and accelerating peripheral node vectors into a terminal inward free-fall trajectory."
+          data-help-pro-ja="主特異点質量係数：中心星ノード（インデックス0番）に割り当てられた静止質量スカラー値をメモリ上で直接上書き（オーバーライト）します。このレジスタ値を最大化するほど、全天体の加速度行列の分子が暴力的に増幅され、あらゆるケプラー束縛状態（安定軌道）を一瞬で破綻。周辺惑星の全速度ベクトルを、中心星ピクセルへの破滅的な自由落下弾道へと強制変調させます。"
+          data-help-pro-en="PRIMARY SINGULARITY MASS COEFFICIENT: Directly overwrites the static mass scalar assigned to the central mass node (Index 0). Maximizing this register forcefully amplifies the numerator of the overarching acceleration matrix, instantly destabilizing all Keplerian boundary states and accelerating peripheral node vectors into a terminal inward free-fall trajectory.">
+  <label><span data-en="Sun Mass:" data-ja="太陽質量:">Sun Mass:</span></label>
+  <input id="sunMass" type="range" min="10" max="5000" value="2000">
+  <input id="sunMassInput" type="number" min="10" max="5000" value="2000">
+</div>
+
+       <div class="speed-control-line"
+            data-help-kids-ja="太陽のヨコ初速インパルス：どっしり動かないはずの太陽に、最初から「右か左へのダッシュスピード」を注入するよ。値を0以外に動かした瞬間、太陽は原点をすてて画面を大スピードで大漂流しはじめ、そのものすごい重力で子分の星たちをズルズルと引きずり回しながら移動させるぞ！"
+            data-help-kids-en="PRIMARY NODE HORIZONTAL IMPULSE: Injects an initial linear velocity vector component along the local X-axis map index. Altering this register from zero forces the central star matrix to instantly abandon its origin coordinates, dragging the system's absolute gravity reference frames and inducing a global horizontal drift変調 across all peripheral array indices."
+            data-help-pro-ja="主ノード水平初速インパルス：インデックス0番（中心星）のローカルX軸座標変位ステップに対し、初期速度ベクトルコンポーネントを直接インジェクション（注入）します。この値を非ゼロに変動させた瞬間、太陽マトリクスは原点座標を放棄して2D Canvas上を大漂流（慣性移動）し始め、全系の絶対重力基準フレームを暴力的に牽引。周辺の全配列インデックスに対してグローバルな水平ドリフト変調を引き起こします。"
+            data-help-pro-en="PRIMARY NODE HORIZONTAL IMPULSE: Injects an initial linear velocity vector component along the local X-axis map index. Altering this register from zero forces the central star matrix to instantly abandon its origin coordinates, dragging the system's absolute gravity reference frames and inducing a global horizontal drift変調 across all peripheral array indices.">
+  <label><span data-en="Sun Velocity (X):" data-ja="太陽 初期速度 (X):">Sun Velocity (X):</span></label>
+  <input type="range" id="sunVxSlider" min="-50" max="50" step="0.1" value="0">
+  <input type="number" id="sunVxInput" step="0.1" value="0">
+</div>
+
+       <div class="speed-control-line"
+            data-help-kids-ja="太陽のタテ初速インパルス：太陽に、最初から「上か下へのダッシュスピード」を注入するよ。値を書きかえた瞬間、太陽は画面の上下にむかって猛スピードで大漂流を開始！静かだった星公転サークルが、縦方向に引きずられる狂暴な質量ストリームへと変身しちゃうぞ！"
+            data-help-kids-en="PRIMARY NODE VERTICAL IMPULSE: Injects an initial linear velocity vector component along the local Y-axis map index. Overwriting this register triggers a persistent vertical positional recalculation (y += vy), forcing the central mass star to accelerate downward or upward, instantly transforming the static orbital grid into a vertically dragging mass flux."
+            data-help-pro-ja="主ノード垂直初速インパルス：インデックス0番（中心星）のローカルY軸座標変位ステップに対し、初期速度ベクトルコンポーネントを直接インジェクション（注入）します。このレジスタ値を上書きした瞬間、毎フレームの垂直座標再計算（y += vy）が冷酷に執行され、太陽は画面の上下方向へと大漂流を開始。静的であるべき軌道グリッドを、縦方向に引きずられる狂暴な質量流へと強制変調させます。"
+            data-help-pro-en="PRIMARY NODE VERTICAL IMPULSE: Injects an initial linear velocity vector component along the local Y-axis map index. Overwriting this register triggers a persistent vertical positional recalculation (y += vy), forcing the central mass star to accelerate downward or upward, instantly transforming the static orbital grid into a vertically dragging mass flux.">
+  <label><span data-en="Sun Velocity (Y):" data-ja="太陽 初期速度 (Y):">Sun Velocity (Y):</span></label>
+  <input type="range" id="sunVySlider" min="-50" max="50" step="0.1" value="0">
+  <input type="number" id="sunVyInput" step="0.1" value="0">
+</div>
+
+       <div class="speed-control-line"
+            data-help-kids-ja="まぼろしの奥行きインパルス（大オチ）：太陽に、うその「おくゆきスピード（Vz）」をむりやり覚えこませるよ！ネイティブな3D機能をもたないペチャンコの「完全平面2D Canvas」の世界だから、太陽が本当に奥へすすむ能力はないんだ。代わりに、3Dの数式を内側からハックして宇宙全体のドット絵をギュギュッと拡大・縮小させることで、「おくゆき方向へ大冒険しているような視覚的トリック」を画面にどろくさく偽装するぞ！"
+            data-help-kids-en="DIMENSIONAL ILLUSION IMPULSE: Injects an initial depth vector (vz) into the primary node heap. Since the underlying graphics subsystem is strictly a flat 2D Canvas context with zero native depth layers, changing this value does not move the star physically back, but instead algorithmically warps the projection matrix—forcing the viewer matrix to render the entire universe as a expanding or shrinking pixel artifact to simulate a depth-field drift."
+            data-help-pro-ja="次元欺瞞初速インパルス（大オチ）：中心星のメモリヒープに対し、虚構の「奥行きベクトル（vz）」を強制注入します。ネイティブな深度レイヤーを1ピクセルも持たない「完全平面2D Canvas」というグラフィックスの檻において、この数値は太陽を物理的に奥へ移動させる能力を持ちません。代わりに、擬似3D射影行列のスケール係数を内側からハックし、全宇宙のピクセル描画倍率を力まかせに拡大・縮小（リラスタライズ）させることで、「奥行き方向へ大漂流しているかのような視覚的錯覚」を画面上に強制的かつ泥臭く偽装します。"
+            data-help-pro-en="DIMENSIONAL ILLUSION IMPULSE: Injects an initial depth vector (vz) into the primary node heap. Since the underlying graphics subsystem is strictly a flat 2D Canvas context with zero native depth layers, changing this value does not move the star physically back, but instead algorithmically warps the projection matrix—forcing the viewer matrix to render the entire universe as a expanding or shrinking pixel artifact to simulate a depth-field drift.">
+  <label><span data-en="Sun Velocity (Z):" data-ja="太陽 初期速度 (Z):">Sun Velocity (Z):</span></label>
+  <input type="range" id="sunVzSlider" min="-50" max="50" step="0.1" value="0">
+  <input type="number" id="sunVzInput" step="0.1" value="0">
+</div>
+
+     <div class="section"
+          data-help-kids-ja="子分の星の基本の重さ：新しく宇宙に産み落とされる、まわりの小さな星たちの「生まれたての重さ」を設定するよ。数値を大きくするほど、生まれた瞬間の星のサイズ（体積）がデカくなるぞ！★【超重要・300基の重力ロック仕様】：実はこの宇宙、星の数が【300個】より多いときは、重くならないように星どうしが「引き合う力（引力）」だけが自動でスリープしているんだ。でも、引き合わないだけで【あたり判定】は生きてるぞ！だから、たまたま同じ場所に突っ込んできた星どうしがドカンと激突すると、重さがプラスされ、イキオイが混ざり合って新しいコースへぶっ飛んでいくんだ！そして、星が画面の外にすっ飛んで宇宙の数が【299個以下】になった瞬間……眠っていた「引き合う引力」もついに完全解放されて、ガチの重力お引越しバトルが始まるぞ！"
+          data-help-kids-en="SUB-NODE BASE MASS CONFIGURATOR [The 300-Body Gravity Lock]: Sets the initial mass value for newly spawned sub-nodes. Higher values instantly increase the physical render volume (size) of each star! ★[CRITICAL SYSTEM BOUNDARY]: To optimize processor rendering, mutual 'gravitational pulling' between sub-nodes is hard-locked to OFF when the population is above 300! However, the COLLISION ENGINE remains 100% active! Even without gravity, any stars that accidentally cross paths will trigger a physical crash—merging their masses and combining their momentum to deflect into a brand-new trajectory! The exact millisecond the node count drops to [299 or fewer], the mutual pulling physics also wakes up, shifting the cosmos from pure inertial dodging into a brutal N-body survival matrix!."
+          data-help-pro-ja="生成天体質量マトリクス：新しく空間（インデックス）へ産み落とされるマイナー天体ノードの、一次バリオン質量基準値を定義します。このスカラ値は座標創世の瞬間に力学運動方程式へ注入される絶対定数であり、天体合体（マージ）が発生する前の全非ステラオブジェクトにおける引力ベクトルおよび幾何学的空間占有体積（Volume Scale）の初期規律を強制決定します。"
+          data-help-pro-en="OBJECT MASS DENSITY VECTOR: Establishes the primary baryonic mass baseline for newly instantiated sub-stellar nodes. This scalar value serves as the core constant injected into the structural kinetic equations at the moment of coordinate creation, dictating the raw gravitational pull and spatial volume scale of all non-stellar bodies prior to any cosmic merger events.">
+  <label>
+    <span data-en="Object Mass:" data-ja="生成天体の基本質量:">Object Mass:</span>
+    <input id="objMass" type="range" min="0.1" max="50" step="0.1" value="1.0">
+  </label>
+  <input id="objMassInput" type="number" min="0.1" max="200" step="0.1" value="1.0" style="width:70px;">
+</div>
+
+      <div class="speed-control-line"
+           data-help-kids-ja="質量適用モード【しんちょく：せかいの平坦化】：あたらしく星を産むときのルールを決めるよ。RND（ランダム）にすると、星の重さがマイクラの地形みたいに凸凹ランダムになり、FIX（固定）にすると、すべて同じ重さの「スーパーフラット（完全に平らなせかい）」の規律で星をきれいにならべるよ。インベントリの安全は保証しないぞ！"
+           data-help-kids-en="SPAWN MASS MODE [ADVANCEMENT: STRICTLY FLAT]: Toggles the cosmic grid initialization protocol. Switching to RND surrenders the baryonic initialization vector to the stochastic whims of the RNG Deity via randomMass(). Switching to FIX overrides the chaotic terrain generation, enforcing a zero-variance, Superflat Mass Matrix across all newly spawned chunks within the 3D coordinate volume. Proceed with dimensional caution."
+           data-help-pro-ja="質量適用モード【しんちょく：せかいの平坦化】：3次元座標空間における天体ノードのスポーン（生成）因果律を制御します。RND（ランダム）の執行はバリオン質量の初期化を『確率論的乱数神（RNG）』の気まぐれに委ね、FIX（固定）への変調はカオスな地形生成プロトコルを強制的にオーバーライドします。これにより、生成されるすべてのチャンクへ変動性ゼロの『スーパーフラット質量規律』を単一化配線。インベントリの安全は保証しません。"
+           data-help-pro-en="SPAWN MASS MODE [ADVANCEMENT: STRICTLY FLAT]: Toggles the cosmic grid initialization protocol. Switching to RND surrenders the baryonic initialization vector to the stochastic whims of the RNG Deity via randomMass(). Switching to FIX overrides the chaotic terrain generation, enforcing a zero-variance, Superflat Mass Matrix across all newly spawned chunks within the 3D coordinate volume. Proceed with dimensional caution.">
+  <label><span data-en="Spawn Mass Mode:" data-ja="質量適用モード:">Spawn Mass Mode:</span></label>
+  <button id="useFixedObjMassBtn" type="button" class="toggle-off" style="width: 65px !important; height: 24px; line-height: 18px; padding: 0;" data-en="RND" data-ja="ランダム" data-alt-en="FIX" data-alt-ja="固定">RND</button>
+  <div class="circuit-filler" id="massStatusIndicator">M-FIX</div>
+</div>
+
+       <div class="speed-control-line"
+            data-help-kids-ja="時間のすすむ早さ【しんちょく：ティックレート倍速】：宇宙の時間の進み方を「1倍速〜30倍速」までターボ加速させる加速レバーだよ！内部のティックレート（計算スピード）を限界突破させて、60FPSを超えたワープ駆動ができるぞ。もし画面がカクついたら、宇宙がこわれないように安全弁（クランプ）が自動で作動するよ。レッドストーン回路の動作は保証しません！"
+            data-help-kids-en="SIMULATION SPEED [ADVANCEMENT: TICK RATE MUTATOR]: Dynamically scales the localized Delta-Time (dt) matrix relative to the real-world performance.now() clock. Modifying this register amplifies the simulation tick rate, pushing the sub-stellar mechanics beyond the standard 60TPS baseline. Features an integrated safety valve (Math.min) to prevent dimensional tearing and physics crash during server lag. Redstone engine efficiency may vary."
+            data-help-pro-ja="時間進行速度【進捗：ティックレート位相変調】：現実世界の高精度タイマー（performance.now）に同期した、局所デルタタイム（dt）の計算スケールを動的に変調させます。このレバーは宇宙のティックレートを内部加速させ、標準の60TPSベースラインを超越した超時間駆動を執行。フレーム遅延（ラグ）発生時は上限クランプ（Math.min）の安全弁が自動介入し、世界の崩壊を未然に防ぎます。レッドストーン回路の動作は保証されません。"
+            data-help-pro-en="SIMULATION SPEED [ADVANCEMENT: TICK RATE MUTATOR]: Dynamically scales the localized Delta-Time (dt) matrix relative to the real-world performance.now() clock. Modifying this register amplifies the simulation tick rate, pushing the sub-stellar mechanics beyond the standard 60TPS baseline. Features an integrated safety valve (Math.min) to prevent dimensional tearing and physics crash during server lag. Redstone engine efficiency may vary.">
+  <label><span data-en="Simulation Speed:" data-ja="時間進行速度:">時間進行速度:</span></label>
+  <input type="range" id="speedSlider" min="1" max="30" step="1" value="10">
+  <input type="number" id="speedInput" min="1" max="30" step="1" value="10">
+</div>
+
+<div class="section" style="display: flex; flex-direction: row; gap: 10px;"
+     data-help-kids-ja="リアルタイム・データ計器盤【しんちょく：F3デバッグ画面】：宇宙をまわる星たちのすべてのステート（状態情報）を常時ハッキングして一元監視する中央管制盤だよ。星の生き残り数、ふっ飛んだ星（Escaped）、ぶつかって合体した数（Collided）がすべて一目でわかるぞ！バグの怒りメーター（NaN）をしっかり見張って、ワールド崩壊を未然にふせごう。"
+     data-help-kids-en="REALTIME TELEMETRY STREAM [ADVANCEMENT: F3 DEBUG MATRIX]: Continuously samples the high-fidelity state vectors of the local cluster. Intercepts velocity components, barycentric coordinate tensors, and entity casualty registers in real time. Activating the clipboard trigger packages this active runtime telemetry into a structured text stream, executing a clean cyber-injection into the external OS buffer. Keep an eye on the NaN entity count to prevent server griefing."
+     data-help-pro-ja="リアルタイム・テレメトリーストリーム【進捗：デバッグ画面の支配者】：ローカル星団の高精度ステートベクトルを常時サンプリングし、一元監視する中央管制盤です。天体の速度コンポーネント、バリセンター座標テンソル、およびエンティティの消滅（脱出・衝突）レジスタを全フレームで検知。クリップボードトリガーの発火により、この稼働ログを構造化テキストストリームへ一括成形し、現実世界のOSバッファへサイバー射出します。乱数神の怒り（NaN数）を監視し、ワールド崩壊を未然に防ぎましょう。"
+     data-help-pro-en="REALTIME TELEMETRY STREAM [ADVANCEMENT: F3 DEBUG MATRIX]: Continuously samples the high-fidelity state vectors of the local cluster. Intercepts velocity components, barycentric coordinate tensors, and entity casualty registers in real time. Activating the clipboard trigger packages this active runtime telemetry into a structured text stream, executing a clean cyber-injection into the external OS buffer. Keep an eye on the NaN entity count to prevent server griefing.">
+  <div id="bodyCountDisplay" style="color:white; font-size:12px;">Sun: 0 / Obj: 0 / Comet: 0</div>
+  <div id="turnCountDisplay" style="color:white; font-size:12px;">Turn: 0</div>
+  <div id="barycenterNameDisplay" style="color:#00ffcc; font-size:12px;">Barycenter: -</div>
+  <div id="barycenterPosDisplay" style="color:#a3ffee; font-size:12px;">Barycenter Pos: -</div>
+  <div id="barycenterMassDisplay" style="color:#ff99cc; font-size:12px;">Barycenter Mass: -</div>
+  <div id="sunSpeedDisplay" style="color:white; font-size:12px;">Sun Speed: 0</div>
+  <div>Alive: <span id="statAlive">0</span></div>
+  <div>Escaped: <span id="statEscaped" style="color: #ffaa00;">0</span></div>
+  <div>Collided: <span id="statCollided" style="color: #ff4444;">0</span></div>
+  <div>Removed: <span id="statRemoved" style="color: #888888;">0</span></div>
+  <div>NaN: <span id="statNaN" style="color: #ff00ff; font-weight: bold;">0</span></div>
+</div>
+
+        <div class="monitor-stream-block" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
+          <div class="speed-control-line"
+               data-help-kids-ja="宇宙年齢【システムじっせき：創世記プロトコル】：この宇宙が生まれてから、ゲームのなかで「何万年、何ヶ月、何日」がすぎたかを表す累計タイマーだよ。全フレームの時間が積み重なった歴史の長さなんだ。ちなみに、この宇宙ではベッドで寝ても、夜（暗黒フェーズ）をスキップすることはできないからね！"
+               data-help-kids-en="COSMIC AGE VECTOR [SYSTEM ACHIEVEMENT: GENESIS PROTOCOL]: Registers the cumulative runtime epoch of the localized baryonic cluster since the initial coordinates injection. Measures the integrated summation of all elapsed Delta-Time (dt) intervals. Note: In this simulation, executing a horizontal sleep cycle will not force a time-skip past the dark phase."
+               data-help-pro-ja="宇宙年齢【システム実績：創世記プロトコル】：初期座標が射影された瞬間からの、局所星団における累計時間エポックを記録します。全フレームで統合・加算された積分デルタタイム（dt）の総和をサンプリング。なお、この宇宙では水平睡眠シークエンスを執行しても、強制的に暗黒フェーズ（夜）をスキップすることはできません。"
+               data-help-pro-en="COSMIC AGE VECTOR [SYSTEM ACHIEVEMENT: GENESIS PROTOCOL]: Registers the cumulative runtime epoch of the localized baryonic cluster since the initial coordinates injection. Measures the integrated summation of all elapsed Delta-Time (dt) intervals. Note: In this simulation, executing a horizontal sleep cycle will not force a time-skip past the dark phase.">
+            <label style="width: auto; min-width: 90px;"><span data-en="Cosmic Age:" data-ja="宇宙年齢:">宇宙年齢:</span></label>
+            <div id="statSimTime" style="flex: 1; font-family: 'Consolas', monospace; color: #00ffff !important; font-weight: bold; text-shadow: 0 0 4px rgba(0,255,255,0.6); font-size: 11px; text-align: left; padding-left: 8px;">AGE: 0000 Yr, 00 Mo, 00 Day [0.0s]</div>
+
+            <div class="circuit-filler">TIME</div>
+          </div>
+          <div class="speed-control-line"
+               data-help-kids-ja="稼働時間【システムじっせき：終わりなき集積】：星の計算をするために、キミのパソコンの頭脳（CPUコア）がリアルにどれだけの時間を消費したかを表示するよ。警告：このシミュレータを朝まで徹夜で放置したとしても、チェストの中に希少なドロップアイテムが自動で集まることはありません！"
+               data-help-kids-en="ENGINE RUNTIME ALLOCATION [SYSTEM ACHIEVEMENT: ETERNAL LOGISTICS]: Tracks the real-world CPU processing epoch allocated to the N-body gravitational calculation loops. Measures the absolute temporal consumption within the hardware thread pool since the executive context initialization. Warning: Leaving this simulation active overnight will not automatically accumulate rare drop items in your storage containers."
+               data-help-pro-ja="稼働時間【システム実績：終わりなき集積】：N体引力計算ループに割り当てられた、現実世界におけるCPU処理エポックの絶対的な累積消費時間をサンプリングします。実行コンテキストが初期化されてからの物理コアの総駆動時間を計測。警告：このシミュレータを徹夜で放置しても、ストレージコンテナに希少ドロップ素材が自動で集積されることはありません。"
+               data-help-pro-en="ENGINE RUNTIME ALLOCATION [SYSTEM ACHIEVEMENT: ETERNAL LOGISTICS]: Tracks the real-world CPU processing epoch allocated to the N-body gravitational calculation loops. Measures the absolute temporal consumption within the hardware thread pool since the executive context initialization. Warning: Leaving this simulation active overnight will not automatically accumulate rare drop items in your storage containers.">
+            <label style="width: auto; min-width: 90px;"><span data-en="Engine Runtime:" data-ja="稼働時間:">稼働時間:</span></label>
+            <div id="statRunTime" style="flex: 1; font-family: 'Consolas', monospace; color: #ffaa00 !important; font-weight: bold; text-shadow: 0 0 4px rgba(255,170,0,0.6); font-size: 11px; text-align: left; padding-left: 8px;">RUN: 00:00.0</div>
+            <div class="circuit-filler">CORE</div>
+          </div>
+
+          <div class="speed-control-line"
+               data-help-kids-ja="現実時刻【システムじっせき：じげんの錨】：キミが生きている「リアルな現実世界の本物の時計」と完全にシンクロする時計だよ！画面を見つめすぎて、現実世界で何日もごはんを食べるのを忘れていないかをチェックする時間軸のアンカーだ。注意：この時計を止めても、窓の外のホンモノの空は無情に進みつづけるぞ。"
+               data-help-kids-en="REAL TIME OVERLAY [SYSTEM ACHIEVEMENT: CHRONO-ANCHOR]: Synchronizes with the high-precision wall-clock of the operator's primary system. Serves as a temporal baseline stabilizer to verify if you have spent consecutive biological days staring at the screen. Note: The external sky rendering engine will loop indefinitely regardless of the state of this interface."
+               data-help-pro-ja="現実時刻【システム実績：次元の錨】：オペレーターが生存している現実世界の高精度ウォールクロックと完全同期します。画面を凝視したまま連続で何日もの生物学的昼夜サイクルを浪費していないかを検証する時間軸の安定装置。注意：このインターフェースの数値に関わらず、窓の外の現実の描画エンジン（空）は無情にループし続けます。"
+               data-help-pro-en="REAL TIME OVERLAY [SYSTEM ACHIEVEMENT: CHRONO-ANCHOR]: Synchronizes with the high-precision wall-clock of the operator's primary system. Serves as a temporal baseline stabilizer to verify if you have spent consecutive biological days staring at the screen. Note: The external sky rendering engine will loop indefinitely regardless of the state of this interface.">
+            <label style="width: auto; min-width: 90px;"><span data-en="Real Time:" data-ja="現実時刻:">現実時刻:</span></label>
+            <div id="statRealTime" style="flex: 1; font-family: 'Consolas', monospace; color: #00ff00 !important; font-weight: bold; text-shadow: 0 0 4px rgba(0,255,0,0.6); font-size: 11px; text-align: left; padding-left: 8px;">REAL: 00:00:00</div>
+            <div class="circuit-filler">WALL</div>
+          </div>
+        </div>
+
+  <button id="copyTelemetryBtn" type="button" class="toggle-off"
+          data-en="COPY" data-ja="コピー"
+          data-help-kids-ja="データコピー【システムじっせき：あつめられた記憶】：いま動いている全宇宙のすべての星の場所とスピードのデータを1つの暗号文にまとめて、クリップボードへサイバー射出（コピー）するよ！重力大爆発でせかいが壊れてリセットされる前に、宇宙のバックアップデータをセーブするコマンドだよ！"
+          data-help-kids-en="TELEMETRY DUMP [SYSTEM ACHIEVEMENT: COLLECTOR'S PARADIGM]: Compiles the live multi-dimensional state vector matrices into a single string packet and executes a low-level export protocol to the external OS buffer. Allows the operator to secure a static backup of the orbital timeline before a gravitational saturation event wipes the grid."
+          data-help-pro-ja="テレメトリー・ダンプ【システム実績：収集家のパラダイム】：稼働中の多次元ステートベクトル行列を単一のテキストパケットへコンパイルし、外部OSバッファへの低級エクスポートプロトコルを執行します。重力飽和イベントによって世界の全チャンク（星系）が崩壊・リセットされる前に、軌道タイムラインの静的バックアップを安全に確保するためのコマンドです。"
+          data-help-pro-en="TELEMETRY DUMP [SYSTEM ACHIEVEMENT: COLLECTOR'S PARADIGM]: Compiles the live multi-dimensional state vector matrices into a single string packet and executes a low-level export protocol to the external OS buffer. Allows the operator to secure a static backup of the orbital timeline before a gravitational saturation event wipes the grid.">COPY</button>
+
+        <div class="speed-control-line"
+             data-help-kids-ja="時空セーブ＆ロード【システムじっせき：ならぶ並行世界】：いまの宇宙の状態を、メモリのスロット【0・1・2】にまるごと瞬間セーブ、またはそこからロード（復元）できるぞ！あぶない重力じっけんをして世界が崩壊して全ロスしたときでも、一瞬でセーブした過去の世界線へタイムリープ（まきもどし）できるセーブコアだよ！★【超・極秘のオートセーブ仕様】：実は、リセットボタンを押した直後や、画面をリロード（再読み込み）した直後の「生まれたての一番最初の宇宙データ」は、スロット【1】に自動でバックアップされる仕組みになっているんだ！「あ！リセットする前の設定を忘れた！」と絶望したときは、あわてずスロット1の【LOAD】を押して、過去の世界線からデータを救出しよう！"
+             data-help-kids-en="STATE MATRIX PERSISTENCE [THE MULTI-WORLD MATRIX]: Commits or recalls your live multidimensional universe tensors to localized memory slots [0-2]! This core allows you to take snapshots of your timeline, or execute an instant time-leap back to a pre-collapse state if an experiment triggers a fatal failure. ★[CLASSIFIED AUTO-SAVE TRIGGER]: Here is a top-secret feature: the exact millisecond you press Reset or reload the page, your 'initial starting universe data' is automatically backed up into Slot [1]! If you ever panic thinking you permanently lost a beautiful cosmic layout, just hit LOAD on Slot [1] to rescue your data from the deleted timeline!."
+             data-help-pro-ja="時空状態永続化マトリクス【システム実績：並行世界の調律】：現在稼働中の多次元ステートベクトルテンソルを、局所揮発性メモリレジスタ（スロット0〜2）に書き込み、または読み込みます。軌道タイムラインの独立したスナップショットを安全に確保し、実験パラメータの致命的失敗（世界の崩壊）が発生した際には、時空を過去の状態へと即座にロールバック（復元）することが可能です。"
+             data-help-pro-en="STATE MATRIX PERSISTENCE [SYSTEM ACHIEVEMENT: MULTI-WORLD MATRIX]: Commits or recalls the live multidimensional state vector tensors to localized volatile memory registers [0-2]. Allows the operator to secure distinct snapshots of the orbital timeline, or roll back the localized dimension to a pre-collapse state when an experimental variable critical failure occurs.">
+          <label style="width: auto; min-width: 90px;"><span data-en="Memory Core:" data-ja="時空記録コア:">時空記録コア:</span></label>
+          <div style="display: flex; flex: 1; gap: 8px; justify-content: flex-start; align-items: center; padding-left: 8px;">
+            <span style="color: #55ffdd; font-family: monospace; font-size: 10px;">[0]</span>
+            <button onclick="saveUniverse(0)" style="height: 20px; line-height: 16px; padding: 0 6px; font-size: 9px; background: linear-gradient(180deg, #5c3311 0%, #2b1704 100%) !important; border-color: #aa5511 !important; color: #ffaa44 !important;">SAVE</button>
+            <button onclick="loadUniverse(0)" style="height: 20px; line-height: 16px; padding: 0 6px; font-size: 9px;">LOAD</button>
+            <div class="split-bar" style="color: #444; padding: 0 2px;">|</div>
+            <span style="color: #55ffdd; font-family: monospace; font-size: 10px;">[1]</span>
+            <button onclick="saveUniverse(1)" style="height: 20px; line-height: 16px; padding: 0 6px; font-size: 9px; background: linear-gradient(180deg, #5c3311 0%, #2b1704 100%) !important; border-color: #aa5511 !important; color: #ffaa44 !important;">SAVE</button>
+            <button onclick="loadUniverse(1)" style="height: 20px; line-height: 16px; padding: 0 6px; font-size: 9px;">LOAD</button>
+            <div class="split-bar" style="color: #444; padding: 0 2px;">|</div>
+            <span style="color: #55ffdd; font-family: monospace; font-size: 10px;">[2]</span>
+            <button onclick="saveUniverse(2)" style="height: 20px; line-height: 16px; padding: 0 6px; font-size: 9px; background: linear-gradient(180deg, #5c3311 0%, #2b1704 100%) !important; border-color: #aa5511 !important; color: #ffaa44 !important;">SAVE</button>
+            <button onclick="loadUniverse(2)" style="height: 20px; line-height: 16px; padding: 0 6px; font-size: 9px;">LOAD</button>
+          </div>
+          <div class="circuit-filler">MEM</div>
+        </div>
+
+        <div class="speed-control-line"
+             data-help-kids-ja="システム自己診断【システムじっせき：バグ退治システム】：内部の物理メモリとプログラムのバグをいっせいにパトロール（スキャン）するよ！画面がピタッとフリーズして動かなくなったり、おかしなバグの予兆を感じたときにこのボタンを押すと、エラーを検出して、宇宙がクラッシュするのを未未然にふせいでくれるセルフチェック機能だよ！"
+             data-help-kids-en="SYSTEM INTEGRITY SCAN [SYSTEM ACHIEVEMENT: FAULT TOLERANCE MATRIX]: Initiates a low-level diagnostic sweep across the internal physics memory blocks and runtime registry. Probes the state vectors of all active entity slots to detect any corrupted memory nodes or infinity errors before a critical crash occurs. Recommended when the grid exhibits unexplainable stillness."
+             data-help-pro-ja="システム自己診断【システム実績：致命的な不具合の検知】：内部の物理演算メモリブロックと実行時レジスタの一括診断スウィープを執行します。稼働中の全エンティティスロットのステートベクトルを走査し、システムが完全停止（クラッシュ）する前に、破損した非数（NaN）ノードや無限ループの予兆を検出。世界が不自然な静寂（バグ）に包まれた際の、最優先のセルフチェック機構です。"
+             data-help-pro-en="SYSTEM INTEGRITY SCAN [SYSTEM ACHIEVEMENT: FAULT TOLERANCE MATRIX]: Initiates a low-level diagnostic sweep across the internal physics memory blocks and runtime registry. Probes the state vectors of all active entity slots to detect any corrupted memory nodes or infinity errors before a critical crash occurs. Recommended when the grid exhibits unexplainable stillness.">
+          <label><span data-en="System Diagnosis:" data-ja="システム自己診断:">システム自己診断:</span></label>
+          <button id="consoleTestBtn" type="button" class="toggle-off" style="width: 65px !important; height: 24px; line-height: 18px; padding: 0;" data-en="DIAG" data-ja="自己診断">DIAG</button>
+          <div class="circuit-filler" id="diagStatusIndicator">READY</div>
+        </div>
+
+      </div>
+    </div> </div> </div> <canvas id="canvas"></canvas>
+<div id="lastUpdatedBottom" class="updated" style="position:fixed; bottom:10px; left:10px;"></div>
+
+  <script src="orbit3d_Va4.js" defer></script>
+
+ <script>
+// =========================================================================
+// 🌐 【4次元完全統合版】日英×階層一括言語・モード切り替えサブシステム
+// =========================================================================
+window.currentLang = 'en'; // デフォルトは英語
+
+// simulationStateの安全確保とヘルプモード初期化（デフォルトはkids:こども）
+if (typeof simulationState === 'undefined') window.simulationState = { ui: {} };
+if (!simulationState.ui.hasOwnProperty("helpMode")) {
+    simulationState.ui.helpMode = "kids";
+}
+
+// 👑【4次元調律コア】：現在の【言語(en/ja) × モード(kids/pro)】から正しいヘルプテキストを取り出す
+function getActiveHelpText(el) {
+    const mode = simulationState.ui.helpMode; // "kids" または "pro"
+    const lang = window.currentLang;          // "en" または "ja"
+        // data-help-kids-ja や data-help-pro-en などの正確な属性名から抽出
+    const targetAttr = `data-help-${mode}-${lang}`;
+    let txt = el.getAttribute(targetAttr);
+        // 【鉄壁の防空フォールバック】：もし無ければ、既存の直書き属性を検索
+    if (!txt) {
+        txt = el.getAttribute(`data-help-${lang}`) ||
+              el.getAttribute(`data-help-pro-${lang}`) ||
+              el.getAttribute(`data-help-kids-${lang}`);
+    }
+    return txt;
+}
+
+// 各要素の初期 data-help を現在の設定（kids × en）で満たす初期化関数
+function initLangDataHelp() {
+    // 4次元のいずれかのヘルプ属性を持っている全ての要素を網羅して初期パッキング！
+    document.querySelectorAll('[data-help-kids-ja], [data-help-pro-ja], [data-help-en], [data-help-ja]').forEach(el => {
+        const initialHelp = getActiveHelpText(el);
+        if (initialHelp) el.setAttribute('data-help', initialHelp);
+    });
+}
+
+// 共通DOMリフレッシュ（言語ボタン・HELPボタン双方がこれを叩く！）
+function refreshControlPanelDOM() {
+    // 1. 全ての対応要素のテキストコンテンツを置換
+    document.querySelectorAll('[data-en][data-ja]').forEach(el => {
+        if (el.tagName === 'BUTTON' || el.tagName === 'SPAN' || el.tagName === 'OPTION') {
+            const targetText = el.getAttribute(`data-${window.currentLang}`);
+            if (targetText) el.textContent = targetText;
+        }
+    });
+
+    // 2. ラベル内のテキストノードを安全に置換
+    document.querySelectorAll('label [data-en][data-ja]').forEach(el => {
+        const targetText = el.getAttribute(`data-${window.currentLang}`);
+        if (targetText) el.textContent = targetText;
+    });
+        // 3. 全てのdata-help属性を、現在の言語×モードの最新データに上書きコンバート！
+    document.querySelectorAll('[data-help-kids-ja], [data-help-pro-ja], [data-help-en], [data-help-ja]').forEach(el => {
+        const newHelp = getActiveHelpText(el);
+        if (newHelp) el.setAttribute('data-help', newHelp);
+    });
+
+    // ガイダンスモニターの表示（デフォルト表示）も言語に合わせる
+    const helpTextEl = document.getElementById("helpText");
+    if (helpTextEl) {
+        const newHelpDefault = getActiveHelpText(helpTextEl);
+        if (newHelpDefault) helpTextEl.textContent = newHelpDefault;
+    }
+}
+
+// 言語切り替えメインロジック（toggleLangBtn）
+const toggleLangBtnEl = document.getElementById('toggleLangBtn');
+if (toggleLangBtnEl) {
+    toggleLangBtnEl.addEventListener('click', () => {
+        window.currentLang = (window.currentLang === 'en') ? 'ja' : 'en';
+        toggleLangBtnEl.textContent = `Language: ${window.currentLang.toUpperCase()}`;
+                refreshControlPanelDOM(); // 4次元リフレッシュ発動
+                console.log(`%c 🌐 Control Panel Language Realignment ──> ${window.currentLang.toUpperCase()}`, "color: #00ffcc; font-weight: bold;");
+    });
+}
+
+// 👑 新設：HELPモード（こども ⇄ プロ）切り替えメインロジック（helpModeBtn）
+// 既存のジェンガを崩さないよう、HTML側に新設したボタンへのバインド
+// 👑【4次元表面調律】：HELPボタンの表面文字を【言語 × モード】から完璧に導き出す関数
+function updateHelpButtonText() {
+    const helpModeBtn = document.getElementById('helpModeBtn');
+    if (!helpModeBtn) return;
+
+    const mode = simulationState.ui.helpMode; // "kids" または "pro"
+    const lang = window.currentLang;          // "en" または "ja"
+
+    // 2×2のマトリクスから冷徹に表面の文字を決定する規律
+    if (lang === 'en') {
+        helpModeBtn.innerText = (mode === 'pro') ? "HELP: PRO" : "HELP: KIDS";
+    } else {
+        helpModeBtn.innerText = (mode === 'pro') ? "HELP: プロ" : "HELP: こども";
+    }
+}
+
+// 共通DOMリフレッシュ（言語ボタン・HELPボタン双方がこれを叩く！）
+function refreshControlPanelDOM() {
+    // 1. 全ての対応要素のテキストコンテンツを置換
+    document.querySelectorAll('[data-en][data-ja]').forEach(el => {
+        if (el.tagName === 'BUTTON' || el.tagName === 'SPAN' || el.tagName === 'OPTION') {
+            const targetText = el.getAttribute(`data-${window.currentLang}`);
+            if (targetText) el.textContent = targetText;
+        }
+    });
+
+    // 2. ラベル内のテキストノードを安全に置換
+    document.querySelectorAll('label [data-en][data-ja]').forEach(el => {
+        const targetText = el.getAttribute(`data-${window.currentLang}`);
+        if (targetText) el.textContent = targetText;
+    });
+        // 🌟【追加】：HELPボタン自身の表面文字も、現在の言語とモードに合わせて強制同期！
+    updateHelpButtonText();
+        // 3. 全てのdata-help属性を、現在の言語×モードの最新データに上書きコンバート！
+    document.querySelectorAll('[data-help-kids-ja], [data-help-pro-ja], [data-help-en], [data-help-ja]').forEach(el => {
+        const newHelp = getActiveHelpText(el);
+        if (newHelp) el.setAttribute('data-help', newHelp);
+    });
+
+    // ガイダンスモニターの表示（デフォルト表示）も言語に合わせる
+    const helpTextEl = document.getElementById("helpText");
+    if (helpTextEl) {
+        const newHelpDefault = getActiveHelpText(helpTextEl);
+        if (newHelpDefault) helpTextEl.textContent = newHelpDefault;
+    }
+}
+
+// --- ② HELPモード（こども ⇄ プロ）切り替えメインロジック ---
+const helpModeBtn = document.getElementById('helpModeBtn');
+if (helpModeBtn) {
+    // 起動時にも正しい表面文字を灯すための初期執行
+    updateHelpButtonText();
+    helpModeBtn.classList.toggle("toggle-on", simulationState.ui.helpMode === "pro");
+    helpModeBtn.classList.toggle("toggle-off", simulationState.ui.helpMode === "kids");
+
+    helpModeBtn.addEventListener('click', () => {
+        // 次元の反転
+        simulationState.ui.helpMode = (simulationState.ui.helpMode === "kids") ? "pro" : "kids";
+                // 👑【調律】光（クラス）のON/OFFで支配し、文字の更新は一斉リフレッシュに委ねる！
+        helpModeBtn.classList.toggle("toggle-on", simulationState.ui.helpMode === "pro");
+        helpModeBtn.classList.toggle("toggle-off", simulationState.ui.helpMode === "kids");
+                // モードが変わったので、DOMの一斉リフレッシュを執行！（ここで表面文字も同期するわ）
+        refreshControlPanelDOM();
+                console.log(`%c ☄️ Help Layer Dimension Shift ──> ${simulationState.ui.helpMode.toUpperCase()}`, "color: #ffaa00; font-weight: bold;");
+    });
+}
+// DOM読み込み完了時、初期化を実行
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLangDataHelp);
+} else {
+    initLangDataHelp();
+}
+
+// =========================================================
+// 既存のUIコントロールロジック（そのまま継承よ！）
+// =========================================================
+document.addEventListener("DOMContentLoaded", () => {
+    const toggleButtons = [
+        document.getElementById("toggleBaryBtn"),
+        document.getElementById("toggle-momentum-btn")
+    ];
+
+    toggleButtons.forEach(btn => {
+        if (btn) {
+            btn.addEventListener("click", () => {
+                btn.classList.toggle("active");
+            });
+        }
+    });
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    const presetButtons = [
+        document.getElementById("presetStableBtn"),
+        document.getElementById("presetChaosBtn"),
+        document.getElementById("presetScatterBtn"),
+        document.getElementById("presetRenderBtn"),
+        document.getElementById("triggerGoliathBtn"),
+        document.getElementById("btnOrbitCam")
+    ];
+
+    presetButtons.forEach(btn => {
+        if (btn) {
+            btn.addEventListener("click", () => {
+                presetButtons.forEach(b => { if (b) b.classList.remove("active", "toggle-on"); });
+                btn.classList.add("active");
+            });
+        }
+    });
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    const camButtons = [
+        document.getElementById("camEquatorBtn"),
+        document.getElementById("camPolarBtn"),
+        document.getElementById("camOverviewBtn")
+    ];
+
+    camButtons.forEach(btn => {
+        if (btn) {
+            btn.addEventListener("click", () => {
+                camButtons.forEach(b => { if (b) b.classList.remove("active", "toggle-on"); });
+                btn.classList.add("active");
+            });
+        }
+    });
+});
+
+const toggleSettingsBtn = document.getElementById("toggleSettingsBtn");
+const settingsPanel = document.getElementById("settingsPanel");
+
+const fixedMassBtn = document.getElementById("useFixedObjMassBtn");
+if (fixedMassBtn) {
+    fixedMassBtn.onclick = function() {
+        this.classList.toggle("toggle-on");
+        this.classList.toggle("toggle-off");
+    };
+}
+
+// =========================================================
+// 👑 コックピット統合変形：3段階ステージ（0 ──> 1 ──> 2）巡航制御ロジック
+// =========================================================
+if (toggleSettingsBtn && settingsPanel) {
+  let currentStage = parseInt(toggleSettingsBtn.getAttribute("data-stage") || "1", 10);
+  settingsPanel.setAttribute("data-stage", currentStage);
+
+  toggleSettingsBtn.addEventListener("click", () => {
+    currentStage = (currentStage + 1) % 3;
+
+    settingsPanel.setAttribute("data-stage", currentStage);
+    toggleSettingsBtn.setAttribute("data-stage", currentStage);
+
+    if (currentStage === 0) {
+      toggleSettingsBtn.setAttribute("data-en", "SYS: OFF");
+      toggleSettingsBtn.setAttribute("data-ja", "システム: 全閉");
+    } else if (currentStage === 1) {
+      toggleSettingsBtn.setAttribute("data-en", "SYS: SET1");
+      toggleSettingsBtn.setAttribute("data-ja", "システム: 基本設定");
+    } else if (currentStage === 2) {
+      toggleSettingsBtn.setAttribute("data-en", "SYS: SET2");
+      toggleSettingsBtn.setAttribute("data-ja", "システム: 特権演算");
+    }
+
+    const targetText = toggleSettingsBtn.getAttribute(`data-${window.currentLang}`);
+    if (targetText) toggleSettingsBtn.textContent = targetText;
+
+    adjustCanvasMargin();
+  });
+}
+
+/* 👑【調律】Dynamic Guidance Monitor Script（4次元データストリーム完全同期化） */
+document.addEventListener("DOMContentLoaded", () => {
+  const helpTextEl = document.getElementById("helpText");
+
+  // 新しい4次元解説属性のいずれかを持つ全要素をリアルタイムで監視！
+  document.querySelectorAll("[data-help-kids-ja], [data-help-pro-ja], [data-help]").forEach(el => {
+    el.addEventListener("mouseenter", () => {
+      // 常にその瞬間の【言語×モード】から生成された最新の data-help 属性を Getter する！
+      const msg = el.getAttribute("data-help");
+      if (msg && helpTextEl) helpTextEl.textContent = msg;
+    });
+    el.addEventListener("mouseleave", () => {
+      if (helpTextEl) {
+        const defaultEl = document.querySelector("#helpText");
+        // 離れた時は、デフォルト画面（helpText自体）の現在の言語×モードのテキストに戻す規律
+        helpTextEl.textContent = getActiveHelpText(defaultEl);
+      }
+    });
+  });
+});
+
+function formatDate(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const h = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
+  return `${y}/${m}/${day} ${h}:${min}`;
+}
+
+const now = new Date();
+const text = "LAST UPDATE: " + formatDate(now);
+
+const bottomEl = document.getElementById("lastUpdatedBottom");
+if (bottomEl) bottomEl.textContent = text;
+
+document.addEventListener("DOMContentLoaded", () => {
+  const eqBtn = document.getElementById("camEquatorBtn");
+  const plBtn = document.getElementById("camPolarBtn");
+  const ovBtn = document.getElementById("camOverviewBtn");
+
+  if (eqBtn) eqBtn.addEventListener("click", () => applyCameraPreset('equator'));
+  if (plBtn) plBtn.addEventListener("click", () => applyCameraPreset('polar'));
+  if (ovBtn) ovBtn.addEventListener("click", () => applyCameraPreset('overview'));
+});
+
+function adjustCanvasMargin() {
+  const bar = document.getElementById("topBar");
+  const canvas = document.getElementById("canvas");
+  if (bar && canvas) {
+    canvas.style.paddingTop = bar.offsetHeight + "px";
+  }
+}
+
+window.addEventListener("resize", adjustCanvasMargin);
+</script>
+</body>
+</html>
