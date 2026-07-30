@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <title>Orbit Simulation Console</title>
+
+   <style>
+/* =========================================================
+      4. RETRO NASA CLASSIC (APOLLO SPACECRAFT STYLE)
+========================================================= */
+/* =========================================================
+  * 🛸 TopBar（トップバー全体）
+  * ========================================================= */
+#topBar {
+     position: fixed;
+     top: 0; left: 0;
+     width: 100%;
+     box-sizing: border-box;
+     background: #2b3036;
+     border-bottom: 3px solid #707780;
+     padding: 4px 8px;
+     gap: 2px 8px;
+     align-items: center;
+     display: flex;
+     flex-wrap: wrap;
+     z-index: 3000;
+     font-family: 'Consolas', 'Courier New', monospace;
+     box-shadow: inset 0 2px 0 rgba(255,255,255,0.2), 0 4px 15px rgba(0,0,0,0.6);
+}
+
+/* テキスト・ラベル共通規律 */
+#topBar label, #topBar span, #topBar div {
+     color: #55ffdd !important;
+     font-size: 11px;
+     font-weight: bold;
+     text-shadow: 0 0 3px rgba(85,255,221,0.5);
+     letter-spacing: 0.5px;
+}
+
+/* =========================================================
+  * 📦 Section（パーツのグループ枠）
+  * ========================================================= */
+.section {
+     display: inline-flex;
+     align-items: center;
+     gap: 6px;
+     padding: 2px 8px;
+     height: 26px;
+     box-sizing: border-box;
+     background: #1e2226;
+     border: 1px solid #485058;
+     border-radius: 2px;
+     box-shadow: inset 0 2px 5px rgba(0,0,0,0.8);
+     margin: 1px 0;
+}
+.section.vertical { flex-direction: row; height: 26px; }
+
+/* =========================================================
+  * 🔘 ボタン各種（通常・トグルON/OFF）
+  * ========================================================= */
+#topBar button,
+#presetPanel button {
+     background: linear-gradient(180deg, #485058 0%, #2b3036 100%);
+     border-top: 1px solid #68727c;
+     border-bottom: 2px solid #15181b;
+     border-left: 1px solid #383e44;
+     border-right: 1px solid #383e44;
+     color: #e0e5eb;
+     border-radius: 1px;
+     padding: 1px 8px;
+     font-size: 10px;
+     font-weight: bold;
+     cursor: pointer;
+     height: 22px;
+     line-height: 18px;
+     text-shadow: 0 -1px 0 rgba(0,0,0,0.5);
+     box-sizing: border-box;
+}
+
+#topBar button:hover,
+#topBar button.toggle-off:hover,
+#presetPanel button.toggle-off:hover {
+     background: #505963 !important;
+     color: #ffffff !important;
+}
+
+/* トグルON（発光状態） */
+#topBar button.toggle-on,
+#topBar button.active {
+     background: linear-gradient(180deg, #ff7700 0%, #b34400 100%) !important;
+     border-color: #ffaa55 !important;
+     color: #ffffff !important;
+     box-shadow: 0 0 10px rgba(255, 119, 0, 0.6) !important;
+     text-shadow: 0 0 4px #fff;
+}
+
+/* トグルOFF（消灯状態・通常と同じ） */
+#topBar button.toggle-off,
+#presetPanel button.toggle-off {
+     box-shadow: none !important;
+     transition: all 0.2s ease;
+}
+
+/* =========================================================
+  * 🎛️ フォーム入力系（スライダー・数値入力・セレクト）
+  * ========================================================= */
+#topBar input[type="range"] {
+     -webkit-appearance: none;
+     appearance: none;
+     background: #101214;
+     height: 4px;
+     width: 60px;
+     vertical-align: middle;
+     margin: 0 2px;
+}
+#topBar input[type="range"]::-webkit-slider-thumb {
+     -webkit-appearance: none;
+     background: #d0d5dd;
+     border: 1px solid #485058;
+     width: 8px;
+     height: 12px;
+     border-radius: 1px;
+     cursor: pointer;
+     box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+#topBar input[type="number"],
+#topBar select {
+     background: #0b0d0e;
+     border: 1px solid #485058;
+     color: #ff9900;
+     font-family: 'Consolas', monospace;
+     font-size: 10px;
+     height: 18px;
+     text-align: center;
+     box-shadow: inset 0 1px 3px rgba(0,0,0,0.9);
+}
+
+/* =========================================================
+  * 👑 コックピット統合変形：3段階ステージ制御（data-stage）
+  * ========================================================= */
+.settings-panel {
+     background: #1e2226 !important;
+     border-top: 2px solid #485058 !important;
+     margin-top: 4px;
+     padding: 6px;
+     gap: 6px;
+     width: 100%;
+     box-shadow: inset 0 3px 10px rgba(0,0,0,0.8);
+     flex-wrap: wrap;
+}
+
+/* Stage 0: 非表示 */
+.settings-panel[data-stage="0"] {
+     display: none !important;
+}
+
+/* Stage 1 & 2: 展開 */
+.settings-panel[data-stage="1"],
+.settings-panel[data-stage="2"] {
+     display: flex !important;
+}
+
+/* Stage 1: サンコントロール隠蔽 */
+.settings-panel[data-stage="1"] #sunControlBlock {
+     display: none !important;
+}
+
+/* Stage 2: 全開放 */
+.settings-panel[data-stage="2"] #sunControlBlock {
+     display: block !important;
+     width: 100%;
+}
+
+/* =========================================================
+    📡 GUIDANCE MONITOR STYLE（1行完全固定・チラつき排除規律）
+    ========================================================= */
+/* 📡 ガイダンスモニター（画面最下部固定 ＋ 複数行可変 ＋ 省略なし仕様） */
+.help-monitor-compact {
+     position: fixed;
+     bottom: 10px;
+     left: 10px;
+     z-index: 4000;
+
+     width: 500px;
+     max-width: calc(100vw - 40px);
+
+     /* 高さを3〜4行分（最大110px程度）まで解放 */
+     height: auto !important;
+     min-height: 26px !important;
+     max-height: 110px !important;
+
+     background: rgba(17, 20, 23, 0.95);
+     border-left: 3px solid #00ff88;
+     box-shadow: 0 0 12px rgba(0,0,0,0.8);
+
+     display: flex !important;
+     align-items: flex-start;
+     gap: 8px;
+     padding: 6px 12px;
+     box-sizing: border-box;
+     pointer-events: auto; /* マウスで触れるように変更 */
+     overflow-y: auto;
+}
+#helpText {
+     color: #00ff88 !important;
+     font-family: 'Consolas', monospace;
+     font-size: 11px;
+     line-height: 1.5 !important; /* 行間を広げて読みやすく */
+
+     white-space: normal !important; /* 自然な改行を許可 */
+     word-break: break-all !important; /* 英単語や記号でも枠内で綺麗に折り返し */
+     text-overflow: clip !important;
+
+     opacity: 0.95;
+     text-shadow: 0 0 4px rgba(0,255,136,0.6);
+     flex: 1;
+}
+
+/* 複数行時に緑のドットアイコンの位置を綺麗に整える */
+.help-monitor-compact span {
+     margin-top: 4px; /* テキストの1行目の高さに垂直位置を合わせる */
+}
+
+
+canvas {
+     display: block;
+     position: fixed;
+     top: 0; left: 0;
+     width: 100vw;
+     height: 100vh;
+     z-index: 1;
+     background: #000;
+}
+
+/* 👑 コントロール行の整流化（1ライン化） */
+.speed-control-line {
+     display: flex;
+     gap: 8px;
+     align-items: center;
+     width: 100%;
+}
+.speed-control-line input[type="range"] {
+     flex: 1;
+     cursor: pointer;
+}
+
+/* 👑 新設：4連物理数式グリッドの整流化セクター */
+.grid-4way-line {
+     display: flex;
+     gap: 6px;
+     align-items: center;
+     width: 100%;
+}
+.grid-4way-line label {
+     width: 60px;
+}
+.grid-4way-line .math-gate {
+     font-family: monospace;
+     font-size: 12px;
+     color: #ff8800;
+     padding: 0 2px;
+}
+.grid-4way-line .split-bar {
+     color: #444;
+     font-weight: bold;
+     padding: 0 6px;
+}
+
+/* 👑 共通規律：全詳細パラメータ行の入力・ダミー枠のサイズ・高さを「24px」へ完全統治 */
+.speed-control-line input[type="number"],
+.speed-control-line .circuit-filler,
+.grid-4way-line input[type="number"] {
+     width: 65px !important;
+     height: 24px !important;
+     text-align: right;
+     box-sizing: border-box;
+     background: #0b0d0e;
+     border: 1px solid #485058;
+     color: #ff9900;
+     font-family: 'Consolas', monospace;
+     font-size: 10px;
+     box-shadow: inset 0 1px 3px rgba(0,0,0,0.9);
+}
+
+.speed-control-line .circuit-filler {
+     text-align: center !important;
+     background: #222;
+     border: 1px solid #444;
+     color: #ff8800;
+     font-family: monospace;
+     font-size: 11px;
+     line-height: 22px;
+     cursor: not-allowed;
+}
+   </style>
+</head>
+
+<body>
+
+<div id="topBar">
+
+   <button id="toggleLangBtn"
+           data-help-kids-ja="表示言語の切り替え：画面上の文字を日本語と英語で切り替えます。実行中のシミュレーション（物理計算）を停止させることなく、すべての表記を一瞬で変更できます。"
+           data-help-kids-en="LANGUAGE SWITCH: Toggles the display language between Japanese and English. Instantly updates all text labels on the screen without interrupting the active simulation."
+           data-help-pro-ja="言語相互作用：DOMのテキストレンダリング・エンジンを切り替えます。実行中の3D物理パイプライン（重力演算）を一切停止させることなく、すべての戦術表示ラベルを言語マトリクス（日本語/英語）間で一斉置換します。"
+           data-help-pro-en="LANGUAGE INTERACTION: Toggles the DOM text rendering engine. Swaps all active telemetry labels between localization matrices (JA/EN) without interrupting the running 3D physics pipeline.">
+     Language: EN
+   </button>
+
+   <button id="helpModeBtn" class="toggle-off">HELP: こども</button>
+
+   <div class="section" style="background: none !important; border: none !important; padding: 0 !important; box-shadow: none !important; margin: 2px; display: inline-block;">
+     <button id="toggleSettingsBtn" data-stage="0" type="button"
+             data-en="SYS: OFF" data-ja="システム: 全閉"
+             data-help-kids-ja="【設定画面切替】押すたびに[0 ➔ 1 ➔ 2]と段階的に操作パネルが拡張し、詳細な設定項目が開放されます。"
+             data-help-kids-en="SETTINGS PANEL: Cycles [0 ➔ 1 ➔ 2] to expand the panel and reveal advanced settings."
+             data-help-pro-ja="操作盤幾何調律：data-stage属性を[0 ➔ 1 ➔ 2]へ巡回し、DOMを展開して隠蔽された演算変数を解放します。"
+             data-help-pro-en="GEOMETRY MODULATION: Cycles data-stage [0 ➔ 1 ➔ 2] to dynamically expand the panel and reveal core variables.">SYS: OFF</button>
+   </div>
+
+   <!-- 🎯 3. 配置天体数量（QTY） -->
+   <div class="section" style="display: inline-flex; align-items: center; background: rgba(0,0,0,0.25); border: 1px solid rgba(0,255,136,0.2); border-radius: 4px; padding: 2px 6px; margin: 2px;"
+        data-help-kids-ja="【スタート時の星の数】シミュレーション開始時の星の数を指定します。数を増やすほど複雑でダイナミックな運動を見ることができますが、増やしすぎるとパソコンの計算処理が重くなります。"
+        data-help-kids-en="STARTING STAR QTY: Specifies the initial number of stars. Higher counts show more complex orbits, but setting it too high may cause lag due to heavy calculation processing."
+        data-help-pro-ja="配置天体数量：物理演算の開始時に生成される天体総数です。天体数を増やすほど重力相互作用の計算量（O(N²)）が容赦なく増大するため、処理能力に合わせて調整してください。"
+        data-help-pro-en="BODY COUNT: Sets the number of objects initialized in the physics array. Increasing this value populates your cosmos, but exponentially compounds the gravitational computation load (O(N²)).">
+     <div class="speed-control-line" style="display: flex; align-items: center; gap: 4px; font-family: monospace; font-size: 11px;">
+       <span style="color: #888; font-size: 10px; white-space: nowrap;">QTY:<strong id="bodyCountLabel" style="color: #00ff88;">24</strong></span>
+       <input type="range" id="bodyCount" min="0" max="3000" value="24" style="width: 50px; height: 10px; cursor: pointer;">
+       <input type="number" id="bodyCountInput" min="0" max="3000" value="24" style="background: #111; color: #00ff88; border: 1px solid #444; font-size: 10px; width: 40px; text-align: right; padding: 1px; border-radius: 2px;">
+     </div>
+   </div>
+
+   <div class="section vertical">
+     <button id="startBtn" class="toggle-on" data-en="RUN (Q)" data-ja="稼働 (Q)"
+             data-help-kids-ja="時間の進行と停止：シミュレーションの時間を停止、または再開します。時間を止めている間は、すべての星の動きや重力の計算が一時停止します。ただし、星の数が多すぎてパソコンの処理能力を超えている場合は、時間を止めても動作の重さは改善されません。"
+             data-help-kids-en="PAUSING AND RESUMING TIME: Pauses or resumes the progression of time in the simulation. While paused, all star movements and gravitational calculations are temporarily halted. Note that if the number of stars already exceeds your PC's processing limit, pausing time will not reduce the hardware load."
+             data-help-pro-ja="時間軸クロノロック【システム実績：凍りついた地平線】：メインループ（requestAnimationFrame）の実行フラグを反転させ、宇宙の時計（クロック供給）を制御します。時間歩進（Delta-t）の積算を瞬時に凍結／解放し、全重力相互作用ベクトルの物理更新を完全停止。"
+             data-help-pro-en="TEMPORAL FLUX OVERRIDE [SYSTEM ACHIEVEMENT: FREEZING THE HORIZON]: Toggles the main execution register of the requestAnimationFrame loop. Freezes or thaws the integration step (Delta-t), halting the accumulation of gravitational force vectors across the active matrix instantly.">RUN (Q)</button>
+
+     <button id="resetBtn" data-en="Reset (E)" data-ja="リセット (E)"
+             data-help-kids-ja="宇宙の初期化と再生成：現在動作しているすべての星のデータを削除し、宇宙を初期状態に戻します。その後、現在の設定値に基づいて新しい星を配置し直します。"
+             data-help-kids-en="RESETTING AND REGENERATING THE UNIVERSE: Clears all active star data and returns the universe to its initial state. It then spawns a new set of stars based on your current settings."
+             data-help-pro-ja="システムエンティティパージ【システム実績：完全なる崩壊】：アクティブな天体配列の長さを瞬時にゼロへ切り詰め、すべての局所速度ベクトルと宇宙記録をヒープメモリから完全抹殺します。"
+             data-help-pro-en="SYSTEM ENTITY PURGE [SYSTEM ACHIEVEMENT: TOTAL ANNIHILATION]: Instantly truncates the active objects array to zero, wiping all localized velocity vectors and cosmic records from the heap memory.">Reset (E)</button>
+   </div>
+
+   <!-- 🎯 ケプラー面積速度・ターゲット解析グループ（L-VEC + LOCK） -->
+   <div class="section" style="display: inline-flex; align-items: center; background: rgba(0,0,0,0.25); border: 1px solid rgba(0,255,136,0.3); border-radius: 4px; padding: 2px 6px; margin: 2px; gap: 6px;"
+        data-help-kids-ja="【面積速度・エネルギー解析】[L-VEC]で星が描く緑の扇形領域と、近点(P)・遠点(A)・運動/位置エネルギー比率(K vs U)を示すリアルタイムHUDを表示します。[LOCK]で観測したい星（Obj0等）を直接指定可能です。『AUTO』で自動選出に戻ります。"
+        data-help-kids-en="AREA VELOCITY & ENERGY ANALYZER: [L-VEC] displays the swept green area, perihelion/aphelion points (P/A), and a real-time energy ratio bar (K vs U). [LOCK] fixes tracking to a specific body (e.g., Obj0). Type 'AUTO' for auto-selection."
+        data-help-pro-ja="面積速度・幾何学エネルギートラッカー：[L-VEC]で角運動量（L=r×p）ベクトル、真のP/A極値座標、面積速度（dS/dt [CONST]）、および運動(K)/位置(U)エネルギー流転デュアルバーをHUD展開。[LOCK]で指定天体をピンポイント追従します。"
+        data-help-pro-en="AREA VELOCITY & ENERGY HUD: [L-VEC] projects angular momentum (L=r×p), true P/A coordinates, area velocity (dS/dt [CONST]), and a real-time K vs U energy dual-bar. [LOCK] pins tracking to a specified body ID.">
+     <button id="toggle-momentum-btn" class="toggle-off" style="font-family: monospace; font-size: 11px; cursor: pointer;" data-en="L-VEC" data-ja="角運動量">L-VEC</button>
+     <div style="width: 1px; height: 14px; background: rgba(0, 255, 136, 0.3); margin: 0 2px;"></div>
+     <div style="display: flex; align-items: center; font-family: monospace;">
+       <span style="color: #00ff88; font-size: 10px; font-weight: bold; margin-right: 4px; user-select: none;">LOCK &gt;</span>
+       <input type="text" id="targetInput" value="AUTO" placeholder="AUTO, Obj0..." style="background: transparent; border: none; border-bottom: 1px solid rgba(0, 255, 136, 0.5); color: #00ff88; font-family: monospace; font-size: 11px; width: 70px; outline: none; text-transform: uppercase;" />
+       <button id="targetBtn" style="background: rgba(0, 255, 136, 0.15); border: 1px solid #00ff88; color: #00ff88; font-family: monospace; font-size: 10px; padding: 1px 6px; margin-left: 4px; cursor: pointer; border-radius: 2px;">OK</button>
+     </div>
+   </div>
+
+   <!-- 🎯 プリセット初期化マトリクスグループ -->
+   <div id="presetPanel" class="section" style="display: inline-flex; align-items: center; background: rgba(0,0,0,0.25); border: 1px solid rgba(0,255,136,0.3); border-radius: 4px; padding: 3px 6px; margin: 2px; gap: 6px;"
+        data-help-kids-ja="【初期配置データ選択】あらかじめ登録された天体配置（スロット1〜4）を選んで宇宙を再生成します。"
+        data-help-kids-en="PRESET DATA SELECTOR: Load pre-registered star configurations (Slots 1-4) to regenerate the universe."
+        data-help-pro-ja="初期化マトリクス選択：演算パラメータのスナップショット（スロット1〜4）を動的にロードします。"
+        data-help-pro-en="INITIALIZATION MATRIX SELECTOR: Dynamically loads parameter snapshots (Slots 1-4).">
+     <button id="preset1Btn" data-preset-idx="1" data-en="PRST: 1" data-ja="PRST: 1"
+             data-help-kids-ja="初期配置データの読み込み（スロット1）：あらかじめ登録されている星の配置データを読み込み、宇宙を再生成します。"
+             data-help-kids-en="LOAD INITIAL DATA (SLOT 1): Loads the pre-registered star configuration to regenerate the universe."
+             data-help-pro-ja="初期化マトリクス設定1：演算パラメータのスナップショット（スロット1）を動的にロードします。"
+             data-help-pro-en="INITIALIZATION MATRIX 1: Dynamically loads the operational parameter snapshot for Slot 1.">PRST: 1</button>
+     <button id="preset2Btn" data-preset-idx="2" data-en="PRST: 2" data-ja="PRST: 2"
+             data-help-kids-ja="初期配置データの読み込み（スロット2）：あらかじめ登録されている星の配置データを読み込み、宇宙を再生成します。"
+             data-help-kids-en="LOAD INITIAL DATA (SLOT 2): Loads the pre-registered star configuration to regenerate the universe."
+             data-help-pro-ja="初期化マトリクス設定2：演算パラメータのスナップショット（スロット2）を動的にロードします。"
+             data-help-pro-en="INITIALIZATION MATRIX 2: Dynamically loads the operational parameter snapshot for Slot 2.">PRST: 2</button>
+     <button id="preset3Btn" data-preset-idx="3" data-en="PRST: 3" data-ja="PRST: 3"
+             data-help-kids-ja="初期配置データの読み込み（スロット3）：あらかじめ登録されている星の配置データを読み込み、宇宙を再生成します。"
+             data-help-kids-en="LOAD INITIAL DATA (SLOT 3): Loads the pre-registered star configuration to regenerate the universe."
+             data-help-pro-ja="初期化マトリクス設定3：演算パラメータのスナップショット（スロット3）を動的にロードします。"
+             data-help-pro-en="INITIALIZATION MATRIX 3: Dynamically loads the operational parameter snapshot for Slot 3.">PRST: 3</button>
+     <button id="preset4Btn" data-preset-idx="4" data-en="PRST: 4" data-ja="PRST: 4"
+             data-help-kids-ja="初期配置データの読み込み（スロット4）：あらかじめ登録されている星の配置データを読み込み、宇宙を再生成します。"
+             data-help-kids-en="LOAD INITIAL DATA (SLOT 4): Loads the pre-registered star configuration to regenerate the universe."
+             data-help-pro-ja="初期化マトリクス設定4：演算パラメータのスナップショット（スロット4）を動的にロードします。"
+             data-help-pro-en="INITIALIZATION MATRIX 4: Dynamically loads the operational parameter snapshot for Slot 4.">PRST: 4</button>
+   </div>
+
+   <div class="section"
+        data-help-kids-ja="【重さの中心（重心）の表示】星たちが引き合いながら回る『全体のバランスの中心（重心）』を表示します。中心を引っ張る力は重い星ほど大きいため、ボタンを押すと『質量の重い順』に2個、3個、8個…と計算対象を増やせます。一番重い2大天体だけの中心から、星系全体を中心としたバランスの変化までを段階的に観察できます。"
+        data-help-kids-en="CENTER OF MASS (BARYCENTER): Displays the balance point of the gravitational system. Since heavier stars pull the center more strongly, pressing this button increases the number of stars included in the calculation in order of mass (2, 3, 8, 15). Observe how the center shifts from just the two heaviest bodies to the entire planetary system."
+        data-help-pro-ja="多体系バリセンター座標演算：ボタンの押下により『data-bary-stage』属性を【0 ➔ 2 ➔ 3 ➔ 4 ➔ 8 ➔ 15】へ巡回させ、重心演算（Weighted Average）に算入する高質量ノードのサンプリング数を動的に拡張します。最大15ノードの引力配線を一斉射出し、ローカル時空の幾何学的焦点をマルチ追跡するデバッグ計器です。"
+        data-help-pro-en="N-BODY BARYCENTRIC PROJECTOR: Cycles the 'data-bary-stage' attribute through [0 ➔ 2 ➔ 3 ➔ 4 ➔ 8 ➔ 15] to dynamically scale the sampling vector index count. Progressively expanding the gravity center calculation to 15-body clusters, forces the 3D transform crosshair and 15-way vector lines to re-index the ultimate focal point of localized spacetime geometry.">
+     <button id="toggleBaryBtn" class="toggle-off" data-bary-stage="0" data-en="BARY: OFF" data-ja="重心: 全閉">BARY: OFF</button>
+   </div>
+
+   <div class="section">
+     <button id="cometTrailBtn" class="toggle-off" data-en="CMT(I)" data-ja="彗星(I)"
+             data-help-kids-ja="彗星の軌跡表示：彗星（ほうき星）が通過した過去のコースを示す線の表示を切り替えます。なお、太陽に近づいたときに発生するリアルタイムの白いしっぽ（尾）は、このボタンの状態に関わらず自動的に計算されて表示されます。"
+             data-help-kids-en="COMET ORBIT LINES: Toggles the display of lines showing the past paths of comets. Note that the white comet tails dynamically generated near the Sun will appear regardless of whether this button is turned on or off."
+             data-help-pro-ja="彗星軌跡条件抽出：レンダリングパスにおいて、天体ヒープ内の特定の型フラグを動的に評価します。他ノードの線分描画サブ体言を容赦なく全スキップ（パージ）し、履歴バッファの描画執行を長周期の彗星ベクトルだけに完全限定（フィルタリング）します。"
+             data-help-pro-en="COMET GRAPHICS FILTER: Evaluates the specific body-type flag in the object heap during the rendering pass. Skips the stroke subroutines for all other nodes, constraining the history buffer lines exclusively to designated long-period cometary vectors.">彗星(I)</button>
+
+     <button id="planetTrailBtn" class="toggle-off" data-en="PLN(O)" data-ja="惑星(O)"
+             data-help-kids-ja="惑星の軌跡表示：太陽や彗星以外の、一般的な星（惑星や小惑星）が通過した過去のコースを示す線の表示を切り替えます。彗星ボタンなど、他の表示設定と自由に組み合わせて同時に重ねて表示できます。"
+             data-help-kids-en="PLANET ORBIT LINES: Toggles the display of lines showing the past paths of ordinary stars (planets and asteroids), excluding the Sun and comets. Can be combined freely with comet display settings at the same time."
+             data-help-pro-ja="一般天体軌跡条件抽出：キャンバスの線分描画ルーチンの反復（ループ）へ割り込みします。個々の天体属性を評価し、中心星および彗星破片の描画パスをフィルタリング（除外）することで、中間質量の一般天体（Obj）の頂点データだけをCanvas上に接続・抽出します。"
+             data-help-pro-en="PLANETARY PARENT CONDITIONAL: Intercepts the iterative loop of the canvas stroke routine. By evaluating individual body attributes, it filters out the central mass and cometary fragments, rendering line steps solely for ordinary orbital object vertices.">惑星(O)</button>
+
+     <button id="sunTrailBtn" class="toggle-off" data-en="SUN(P)" data-ja="太陽(P)"
+             data-help-kids-ja="太陽の軌跡表示：中心にある太陽が、まわりの星たちの重力（作用・反作用の法則）によって動かされた過去のコースを示す線の表示を切り替えます。他の星と引っ張り合うことで、巨大な太陽自身も細かく揺れ動いている物理的な事実を確認できます。"
+             data-help-kids-en="SUN ORBIT LINES: Toggles the display of lines showing the past movement path of the central Sun. It visualizes how the massive Sun itself wobbles and drifts in response to the gravitational pull of surrounding stars based on the Law of Action and Reaction."
+             data-help-pro-ja="主質量中心軌跡隔離：中心質量（Sun）が他天体群から受ける万有引力の作用・反作用（反作用加速テンソル）によって、共通重心（バリセンター）の周囲に描く微小な漂流軌跡を厳密に可視化します。"
+             data-help-pro-en="PRIMARY MASS PATH ISOLATION: Tracks the central star's drift variables to render its precise path. Fully visualizes the real-time gravitational wobble induced by reaction acceleration tensors (Action-Reaction Law), showing the intricate orbital relationship between the primary mass and its planetary system.">太陽(P)</button>
+   </div>
+
+   <div class="section">
+     <button id="showNames" class="toggle-off" data-en="NAME(N)" data-ja="名前(N)"
+             data-help-kids-ja="天体データの表示切り替え：画面上のすべての星の横に、『星の名前』『動く速度』『太陽からの距離』の3つの数値をリアルタイムで表示します。すべての星の文字データを毎フレーム計算して画面に描画するため、星の数が多いときは動作が遅くなる場合があります。"
+             data-help-kids-en="STAR DATA DISPLAY: Displays the name, speed, and distance from the Sun next to every active star in real-time. Because these numerical data blocks are calculated and updated every frame for all stars, enabling this mode with a high star count may reduce processing speed."
+             data-help-pro-ja="動的ビットマップ・ラスタライズ：現在アクティブな全天体インデックスを走査し、生（なま）の「識別文字列」「瞬時速度ベクトル絶対値」および「主星間ユークリッド距離」を変数結合（コンカティネート）。"
+             data-help-pro-en="DYNAMIC BITMAP RASTERIZATION: Iterates through the active body indices to concatenate raw string variables (Identifier, Instantaneous Velocity Magnitude, and Euclidean distance from the primary sun).">NAME(N)</button>
+   </div>
+
+   <!-- 🎯 2. 天体の追加投入（INJECT） -->
+   <div class="section" style="display: inline-flex; align-items: center; background: rgba(0,0,0,0.25); border: 1px solid rgba(0,255,136,0.2); border-radius: 4px; padding: 2px 6px; margin: 2px;"
+        data-help-kids-ja="【天体の追加投入】実行中の宇宙に、指定した重さ（質量）の星を新しく追加します。『第二の太陽』のような非常に重い星を投入すると、周りの星の軌道が重力で大きく乱れる変化を観察できます。"
+        data-help-kids-en="DYNAMIC OBJECT INJECTION: Adds a new star with a custom mass into the active simulation. Injecting a massive object, such as a 'Second Sun', shifts the gravitational center and disrupts surrounding orbits."
+        data-help-pro-ja="動的ノード強制注入：任意の初期質量パラメータを持つ天体をダイレクトに生成します。共通重心（バリセンター）を強力に牽引し、全系の相空間を強制遷移させて宇宙の耐性を監査します。"
+        data-help-pro-en="DYNAMIC NODE INJECTION: Instantiates an active entity ('Obj' or 'Sun2') with a custom mass directly into the system. Violently shifts the local barycenter to audit system orbital resilience.">
+     <div class="speed-control-line" style="display: flex; align-items: center; gap: 4px; font-family: monospace; font-size: 11px;">
+       <select id="injectType" style="background: #111; color: #00ff88; border: 1px solid #444; font-size: 10px; padding: 1px 2px; width: 95px; border-radius: 2px;">
+         <option value="obj">一般天体 (Obj)</option>
+         <option value="sun2">第二の太陽 (Sun2)</option>
+       </select>
+       <span style="color: #888; font-size: 10px; white-space: nowrap;">M:<strong id="injectMassLabel" style="color: #00ff88;">5.0</strong></span>
+       <input type="range" id="injectMassSlider" min="0" max="3000" value="5" step="1" style="width: 50px; height: 10px; cursor: pointer;">
+       <input type="number" id="injectMassInput" min="0" max="3000" value="5" step="any" style="background: #111; color: #00ff88; border: 1px solid #444; font-size: 10px; width: 40px; text-align: right; padding: 1px; border-radius: 2px;">
+       <button id="btnExecuteInject" type="button" class="toggle-off" style="background: rgba(0, 255, 136, 0.15); border: 1px solid #00ff88; color: #00ff88; font-family: monospace; font-size: 10px; padding: 1px 6px; cursor: pointer; border-radius: 2px; font-weight: bold;">INJECT</button>
+     </div>
+   </div>
+
+   <!-- 🎯 カメラ自動回転制御 -->
+   <div class="section" style="display: inline-flex; align-items: center; background: rgba(0,0,0,0.25); border: 1px solid rgba(0,255,136,0.3); border-radius: 4px; padding: 2px 6px; margin: 2px;"
+        data-help-kids-ja="【カメラ自動回転・速度調整】視点を自動回転させる機能と、その回転スピードを調整します。視点を動かすことで、立体的な星の配置や奥行きを確認しやすくなります。"
+        data-help-kids-en="CAMERA ROTATION & SPEED: Toggles camera auto-rotation and adjusts spinning speed. Helps visualize the 3D depth and spatial layout of the stars."
+        data-help-pro-ja="角速度ステップ・ゲイン：視点自動回転のON/OFFおよびフレームごとの方位角増分（0.0〜0.05 rad/frame）を制御し、擬似3Dビューマトリクスを動的に回転変調させます。"
+        data-help-pro-en="ANGULAR VELOCITY GAIN: Controls camera auto-rotation and samples a scalar [0.0 - 0.05] to scale frame-by-frame angular displacement for viewing matrix transformation.">
+     <div class="speed-control-line" style="display: flex; align-items: center; gap: 4px; font-family: monospace; font-size: 11px;">
+       <button id="btnToggleRotate" class="toggle-off" data-en="AUTO" data-ja="自動">AUTO</button>
+       <input type="range" id="cameraRotateSpeed" min="0" max="0.05" step="any" value="0.001" style="width: 50px; height: 10px; cursor: pointer;">
+       <input type="number" id="rotateSpeedInput" min="0" max="0.05" step="any" value="0.001" style="background: #111; color: #00ff88; border: 1px solid #444; font-size: 10px; width: 45px; text-align: right; padding: 1px; border-radius: 2px;">
+     </div>
+   </div>
+
+   <div class="section" id="cameraPresetSection"
+        data-help-kids-ja="カメラアングルの初期化：宇宙を観察するカメラの角度を、あらかじめ最適化された3つの固定視点へ瞬時に切り替えます。異なる方向から宇宙を見ることで、星の配置を多角的に確認できます。なお、非常に速い速度でボタンを連続して押すと、画面の表示が一時的に乱れたり、目の負担になったりする場合があります。"
+        data-help-kids-en="CAMERA ANGLE RESET: Instantly switches the camera to one of three optimized geometric viewpoints. Observing the universe from different directions helps clarify the spatial layout of the stars. Note that rapid sequential switching may cause temporary display flickers or eye strain."
+        data-help-pro-ja="視点行列変数強制上書き【システム実績：認識的めまい】：観測空間の方位角・仰角変数を特定の幾何学的固定値へ瞬時に上書き（オーバーライト）し、2D Canvasバッファ全体の二次元射影マトリクスを一瞬で相転移させます。"
+        data-help-pro-en="VIEWPORT VECTOR OVERWRITE [SYSTEM ACHIEVEMENT: THE COGNITIVE VERTIGO]: Executes instantaneous real-time matrix alignment for equatorial, polar, or isometric perspectives.">
+     <label data-en="VIEW:" data-ja="視点:">VIEW:</label>
+     <button id="camEquatorBtn" data-en="Equator" data-ja="赤道面"
+             data-help-kids-ja="【真横からの視点】カメラを軌道面と水平のアングルに固定します。上空からではわかりにくい「星たちの上下の高さのズレ」や「軌道の傾き」を観察するのに適しています。"
+             data-help-kids-en="SIDE VIEW: Locks the camera horizontally with the orbital plane. Ideal for observing 3D height variations and orbital inclinations that are hard to see from above."
+             data-help-pro-ja="赤道面位相インターセプト【システム実績：無気力な観測者】：カメラの仰角（ピッチ）テンソルを「厳密な0ラジアン」へ強制ロックし、視点を天体の軌道円盤と完全平行にアライメントします。"
+             data-help-pro-en="EQUATORIAL PLANE INTERCEPT [SYSTEM ACHIEVEMENT: THE LAZY OBSERVER]: Locks the camera elevation tensor at exact zero radians, aligning the viewport parallel to the orbital disk.">Equator</button>
+
+     <button id="camPolarBtn" data-en="Polar" data-ja="極域"
+             data-help-kids-ja="【真上からの視点】中心にある太陽の真上から見下ろすアングルに固定します。上下の動きを排除して「平面的な広がり」を観察するのに適しています。"
+             data-help-kids-en="TOP-DOWN VIEW: Locks the camera directly above the central Sun to observe the 2D plane. Ideal for evaluating the orbital radii, distance from the center, and the rotational paths of the stars."
+             data-help-pro-ja="極域軸強制アライメント【システム実績：平坦な宇宙の陰謀】：仰角パラメータを「厳密なPI/2ラジアン」の極限境界値へクランプし、観測者の視点を中心星の回転軸真上へ完全ロックします。"
+             data-help-pro-en="POLAR AXIS ENFORCEMENT [SYSTEM ACHIEVEMENT: FLAT SPACE CONSPIRACY]: Clamps the elevation parameter to the absolute limit of PI/2 radians, locking the observer directly onto the central rotational vector.">Polar</button>
+
+     <button id="camOverviewBtn" data-en="Overview" data-ja="全体俯瞰"
+             data-help-kids-ja="【斜め上からの視点】斜め上空の遠方から宇宙全体を見下ろすアングルに固定します。平面的な広がりと上下の立体的な動きの両方をバランスよく確認できます。"
+             data-help-kids-en="SLANTED OVERVIEW: Locks the camera at a high-altitude diagonal perspective to view the entire system. Balances both horizontal distribution and vertical 3D movement."
+             data-help-pro-ja="全体俯瞰テンソルマトリクス【システム実績：天体模型の鑑賞者】：方位角・仰角の双方のベクトルに対称な中間位相オフセットを注入しつつ、ズームファクターを動的にスケールダウンします。"
+             data-help-pro-en="OVERVIEW TENSOR MATRIX [SYSTEM ACHIEVEMENT: CELESTIAL DIORAMA]: Injects symmetrical intermediate phase offsets into both the azimuth and elevation vectors while scaling down the zoom factor.">Overview</button>
+
+     <button id="btnOrbitCam" class="toggle-off" data-en="ORBIT" data-ja="周回"
+             data-help-kids-ja="星へのカメラ固定と追従：カメラの視点を太陽から切り離し、動いている星の1つに固定して同じ速度で追従します。"
+             data-help-kids-en="STAR TRACKING CAMERA: Anchors the camera directly onto an active moving star instead of the central Sun, follow-tracking its movement."
+             data-help-pro-ja="車載視点局所インターセプト：カメラ行列の注視点（targetBodyIndex）を太陽からパージし、最初に見つかった天体ノードの絶対座標インデックスへ直結させます。"
+             data-help-pro-en="ON-BOARD PERSPECTIVE INTERCEPT: Redirects the camera target matrix (`targetBodyIndex`) from the central Sun to the absolute coordinate index of the first detected `obj` or `comet` node.">ORBIT</button>
+   </div>
+
+   <!-- 🎯 ガイダンスモニター（1行完全固定） -->
+   <div class="help-monitor-compact">
+     <span style="width: 6px; height: 6px; background: #00ff88; border-radius: 50%; box-shadow: 0 0 6px #00ff88; flex-shrink: 0;"></span>
+     <div id="helpText"
+          data-help-kids-ja="【READY】パーツに触れると解説を表示"
+          data-help-kids-en="[READY] Hover items for detail"
+          data-help-pro-ja="【ONLINE】コンポーネントホバーで仕様表示"
+          data-help-pro-en="[ONLINE] Hover components to stream spec">
+       【ONLINE】コンポーネントホバーで仕様表示
+     </div>
+   </div>
+
+   <!-- 詳細設定パネル -->
+   <div id="settingsPanel" class="settings-panel" data-stage="0">
+
+    <div class="section"
+          data-help-kids-ja="【観察ポイント：重力による「軌道の広がり」と「スピード」の変化】星と星が引き合う重力の強さを変えます。数値を動かしたとき、「星の通り道（軌道）がどう広がったり縮んだりするか」と、「太陽の近くを通る速さがどう変わるか」の２つを比べて観察してみてください。"
+          data-help-kids-en="[OBSERVATION POINT: GRAVITY VS. ORBIT SIZE & SPEED] Adjusts the strength of gravity pulling stars together. Change the value and observe two things: how the orbital paths expand or shrink, and how the stars' speeds change when passing near the Sun."
+          data-help-pro-ja="【重力場スカラー変調：相空間における軌道スケーリングと速度分散の遷移】万有引力定数（G）を変調します。数値の加減に伴う「ケプラー軌道要素（長半径・離心率）の連動的スケーリング」および「近点通過時における速さの倍率変化（捕獲・脱出の境界遷移）」を比較解析してください。"
+          data-help-pro-en="[GRAVITATIONAL SCALAR MUTATOR: ORBITAL SCALING & VELOCITY DYNAMICS] Modifies the gravitational constant (G). Compare and analyze the dynamic scaling of Keplerian orbital elements (semi-major axis, eccentricity) and the velocity ratio shifts at periapsis during capture or escape transitions.">
+       <label><span data-en="gravitySlider:" data-ja="万有引力定数 (G):">gravitySlider:</span>
+         <input type="range" id="gravitySlider" min="0.1" max="3" step="0.1" value="1">
+         <input type="number" id="gravityInput" min="0.1" max="3" step="0.1" value="1">
+       </label>
+     </div>
+
+    <div class="section"
+          data-help-kids-ja="【観察ポイント：最初の勢いによる「軌道のカタチ」と「星の運命」の変化】新しく生まれる星が最初から持つスピードの倍率を変えます。数値を動かしたとき、「星の通り道がきれいな丸（円）から細長い形（楕円）へどう変化するか」や、「太陽へ落ちていくか宇宙の彼方へ跳び去っていくか」を比べて観察してみてください。"
+          data-help-kids-en="[OBSERVATION POINT: INITIAL SPEED VS. ORBIT SHAPE & FATE] Adjusts the starting speed multiplier for newly spawned stars. Change the value and observe how orbital paths shift from neat circles to stretched ellipses, and whether stars end up falling into the Sun or escaping into deep space."
+          data-help-pro-ja="【初期速度スカラー変調：離心率の崩壊と脱出速度境界の遷移】天体生成時に算出される「接線方向の円軌道理論速度ベクトル」に乗算するスカラー係数を変調します。数値の変動に伴う「軌道離心率（e）の変化による円・楕円・双曲線軌道への遷移」および「重力圏からの脱出速度（v_esc）超過境界」を比較解析してください。"
+          data-help-pro-en="[INITIAL VELOCITY SCALAR MUTATOR: ECCENTRICITY & ESCAPE BOUNDARY] Scales the tangential velocity vector calculated upon sub-node instantiation. Compare and analyze orbital transitions between circular, elliptical, and hyperbolic trajectories (eccentricity e), as well as the threshold crossing of the escape velocity (v_esc).">
+       <label><span data-en="spawnVelSlider:" data-ja="初期天体速度倍率:">spawnVelSlider:</span>
+         <input type="range" id="spawnVelSlider" min="0.1" max="3" step="0.1" value="1">
+         <input type="number" id="spawnVelInput" min="0.1" max="3" step="0.1" value="1">
+       </label>
+     </div>
+
+  <div class="section"
+          data-help-kids-ja="【観察ポイント：残像が描く「宇宙の幾何学アート」と「画面の軽さ」の変化】星たちが描く「光の線（軌跡）」の長さを変えます。数値を伸ばしたとき、重なり合う軌道がどんな美しい模様を描き出すか、逆に数値を短くしたときに星の動きがどれほどスッキリ見やすくなるか、スライダーを動かして試してみてください。"
+          data-help-kids-en="[OBSERVATION POINT: TRAIL PATTERNS VS. VISUAL CLARITY] Adjusts the visible length of the stars' orbital lines. Slide the value to see what intricate geometric patterns emerge as orbits overlap, or shorten it to strip away the noise and focus purely on the clean movement of the stars."
+          data-help-pro-ja="【履歴配列容量アロケーション：2D Canvasストロークバッファとメモリ保持深度の変調】天体オブジェクトヒープ内の時系列座標リングバッファ配列（trail）の最大許容容量を変調します。保持深度の拡張に伴う「2D Canvasコンテキスト（ctx.lineTo）におけるフレーム毎の反復描画負荷の乗算」および「幾何学的軌道包絡線の可視化効果」を解析してください。"
+          data-help-pro-en="[MEMORY BUFFER CAPACITY ALLOCATION: STROKE LOOP & HISTORICAL DEPTH] Modifies the maximum capacity of the historical coordinate ring-buffer array (trail) in the heap. Analyze the balance between rendering pipeline load (frame-by-frame ctx.lineTo execution scaling) and the geometric visualization of orbital envelopes.">
+       <label><span data-en="trailLenSlider:" data-ja="軌跡ラインの長さ:">trailLenSlider:</span>
+         <input type="range" id="trailLenSlider" min="0.1" max="3" step="0.1" value="0.5">
+       </label>
+     </div>
+
+
+
+   <div class="section"
+      data-help-kids-ja="【観察ポイント：生まれ変わる宇宙の「星の重さのバラつき」と「密度の変化」】新しく作られる宇宙の「星の重さ（M）」と「太陽からの距離（R）」の範囲（最小〜最大）を決めます。数字を小さく揃えて「太陽のすぐ近くにギッシリ集まった超過密な宇宙」を作ったり、Mの差を広げて「ド迫力の巨大惑星とチリのような小惑星が入り混じる宇宙」に実験・改造してみてください。"
+      data-help-kids-en="[OBSERVATION POINT: MASS VARIATION & SPATIAL DENSITY] Configures the min/max boundaries for star mass (M) and distance (R) when a new universe is generated. Experiment with creating an ultra-dense, packed cluster right next to the Sun, or widen the mass gap to build a system with supermassive giants alongside tiny asteroids!"
+      data-help-pro-ja="【アルゴリズム初期配置境界エンベロープ：擬似乱数マッピングと空間密度の閉区間制御】天体実体化ルーチンにおける「質量スカラー（M）」および「極座標半径ベクトル（R）」の厳密な数理的境界制約 [Min, Max] を定義します。閉区間に対する階乗的擬似乱数ストリーム（Math.random）の動的スケーリングに伴う「初期位相空間の確率密度プロファイル」および「重力崩壊・集積シナリオの遷移」を比較解析してください。"
+      data-help-pro-en="[ALGORITHMIC INITIALIZATION ENVELOPE: PSEUDO-RANDOM BOUNDARY & DENSITY] Configures strict mathematical interval constraints [Min, Max] for mass scalars (M) and polar radius vectors (R). Analyze how scaling these closed boundaries shifts the probability density profile of the initial phase space and triggers distinct gravitational collapse or accretion scenarios.">
+   <div class="grid-4way-line">
+     <label data-en="RANGE:" data-ja="生成領域:">RANGE:</label>
+     <input type="number" id="spawnMinMass" min="0.1" max="200" step="0.1" value="0.1">
+     <span class="math-gate">≤ M ≤</span>
+     <input type="number" id="spawnMaxMass" min="0.1" max="200" step="0.1" value="5.0">
+     <span class="split-bar">|</span>
+     <input type="number" id="spawnMinDist" min="50" max="5000" step="50" value="300">
+     <span class="math-gate">≤ R ≤</span>
+     <input type="number" id="spawnMaxDist" min="50" max="5000" step="50" value="1200">
+   </div>
+</div>
+
+
+
+    <div class="section"
+      data-help-kids-ja="【観察ポイント：まわる向きの「揃い具合」と「大激突カオス」の変化】新しく生まれる星たちの公転方向（まわる向き）を決めます。「全員おなじ向き（順回転）」にして綺麗な平らな宇宙の円盤を作ったり、「逆回転」を混ぜて正面衝突しまくる大カオスの宇宙を作ったりして、星たちの生き残り方を観察してみてください。"
+      data-help-kids-en="[OBSERVATION POINT: ORBITAL ALIGNMENT VS. HEAD-ON COLLISIONS] Controls the orbital direction of newly spawned stars. Align them in the same direction (Prograde) to watch a clean protoplanetary disk form, or mix in Retrograde stars to provoke chaotic, high-speed head-on collisions and see who survives!"
+      data-help-pro-ja="【初期角運動量ベクトルの整列調律：全系の周回方向一括バインドと衝突破砕シナリオ】初期速度生成ルーチンにおいて、太陽を中心とする接線速度ベクトルの符号（回転方向）をバインドします。角運動量ベクトルの整列による「黄道面（回転円盤）への平坦化・沈殿プロセス」の誘導、または逆行天体（Retrograde）混在による相対速度倍増に伴う「高エネルギー破砕・散乱現象」を比較解析してください。"
+      data-help-pro-en="[INITIAL ANGULAR MOMENTUM VECTOR ALIGNMENT: PROGRADE/RETROGRADE DISRUPTION] Binds the algebraic sign of tangential velocity vectors around the barycenter. Compare and analyze the orbital decay into a flattened ecliptic disk via synchronized angular momentum, versus high-energy collisional fragmentation scenarios induced by retrograde orbital mixing.">
+   <div class="grid-4way-line">
+     <label data-ja="公転方向:" data-en="ROTATION:">公転方向:</label>
+     <select id="spawnDirection" style="background: #0b0d0e; border: 1px solid #485058; color: #ff9900; font-family: 'Consolas', monospace; font-size: 10px; height: 24px !important; padding: 1px 2px; border-radius: 2px; flex: 1; box-sizing: border-box;">
+       <option value="direct">順回転のみ (100% Prograde)</option>
+       <option value="retro">逆回転のみ (100% Retrograde)</option>
+       <option value="split">半々 (50% Counter)</option>
+       <option value="chaos" selected>標準 (10% Retrograde)</option>
+     </select>
+   </div>
+</div>
+
+<!-- 🎯 全重力閾値 (N-BODY THRESHOLD) -->
+<div class="section"
+      data-help-kids-ja="【観察ポイント：星が減った時にだけ起動する「本当の物理モード」】最初は1000個の星を軽々動かすため太陽の力だけで計算しますが、星が減って「常用サイズ（200個以下）」になった瞬間、自動で『星同士が引き合う本当のモード』へ切り替わります！普段は数値をそのままで、星が減った時のクネクネ動き始める変化を観察してください。"
+      data-help-kids-en="[OBSERVATION POINT: AUTOMATIC TRUE-PHYSICS SWITCH] Starts in light mode to keep 1000 stars running smoothly. Once collisions reduce the population to a manageable count (200 or less), the engine automatically switches to full mutual gravity! Leave this default and watch the orbital paths suddenly transform as the crowd thins out."
+      data-help-pro-ja="【N体相互作用マトリクス閾値：スループット最適化とO(N²)パイプライン自動転換】大量天体（1000個）展開時のフレームレートを保護するため、普段は一極重力近似で処理します。生存数が本閾値（初期値200）以下へ減少したフレームで『全天体間相互作用パイプライン』へ自動昇格します。通常運用時は変更不要の自動スケーリング境界です。"
+      data-help-pro-en="[DYNAMIC N-BODY INTERACTION CUTOFF: AUTOMATIC SCALING BOUNDARY] Preserves frame rates during high-density initializations via primary-dominated approximations. Automatically elevates the processing pipeline to full N-body mutual gravity once active populations decay below this threshold (Default: 200). Operational mutation is rarely required.">
+   <div class="grid-4way-line">
+     <label data-ja="全重力閾値:" data-en="N-BODY THRESHOLD:" style="width: 85px;">全重力閾値:</label>
+     <input type="number" id="nbodyThreshold" min="10" max="2000" step="10" value="200" style="width: 65px !important; height: 24px !important; box-sizing: border-box;">
+     <span class="unit" style="color: #888; font-family: monospace; font-size: 10px; margin-left: 4px;">Bodies</span>
+   </div>
+</div>
+
+<!-- 🎯 演算上限 (N-BODY) & 軟化係数 (EPS²) -->
+<div class="section"
+      data-help-kids-ja="【観察ポイント：本気モード時の「計算ブレーキ」と「エラー防止バリア」】星が減って『本当の物理モード』に切り替わったとき、PCが重くならないよう念のため計算数を制限する「上限（150個）」と、星同士がピッタリ重なってプログラムが止まるのを防ぐ「数学バリア（軟化係数）」です。基本はそのままで大丈夫です。"
+      data-help-kids-en="[OBSERVATION POINT: COMPUTATIONAL SAFETY BRAKE & SHIELD] When the true-physics mode activates, this caps mutual calculations (Default: 150) to prevent lag, while the Softening Factor (EPS²) buffers zero-distance collisions to keep the simulation smooth. Leave at default for optimal balance."
+      data-help-pro-ja="【ハードウェアリミッター＆数値シールド：演算スレッド上限と特異点回避】N体パイプライン昇格時におけるCPU反復ループの上限カットオフ（初期値150）と、天体座標重複時のゼロ除算例外を機械的に無効化する分母マトリクス変位バッファ（ε²）です。パフォーマンスと数理的安定性を両立させます。"
+      data-help-pro-en="[HARDWARE LIMITER & NUMERICAL SHIELD: THREAD CAP & SINGULARITY BUFFER] Enforces an iteration ceiling upon N-body elevation to safeguard CPU thread times, alongside a non-zero displacement buffer (Epsilon Squared ε²) injected into the denominator matrix to mechanically suppress zero-division runtime exceptions during grid overlaps.">
+   <div class="speed-control-line">
+     <label data-en="N-BODY:" data-ja="演算上限:">演算上限:</label>
+     <input type="number" id="nbodyLimitInput" min="50" max="2000" step="10" value="150" style="width: 55px !important; height: 24px !important; box-sizing: border-box;">
+     <label data-en="EPS²:" data-ja="軟化係数:" style="margin-left: 6px;">軟化係数:</label>
+     <input type="number" id="eps2Input" min="0" max="200" step="1" value="64" style="width: 55px !important; height: 24px !important; box-sizing: border-box;">
+   </div>
+</div>
+
+<!-- 太陽質量＆初期速度ブロック（コンパクト幅統一版） -->
+     <div id="sunControlBlock">
+       <!-- 太陽質量 -->
+       <div class="speed-control-line"
+            data-help-kids-ja="【観察ポイント：絶対的中心「太陽の重さ」と「系全体の崩壊」】中心にある太陽の重さを変えます。極端に重くして周りの惑星を一気に引き寄せて呑み込むか、軽くして重力を失った惑星たちが宇宙の彼方へ散り散りになって逃げていく様子を観察してみてください。"
+            data-help-kids-en="[OBSERVATION POINT: CENTRAL MASS VS. SYSTEM COLLAPSE] Adjusts the mass of the central Sun. Make it supermassive to pull every planet into a violent collision, or drop its mass to watch planets break free from gravity and scatter into deep space!"
+            data-help-pro-ja="【主天体質量スカラー変調：重力ウェル深度と全系の捕捉・脱出ダイナミクス】中心マスノード（Index 0）の絶対質量スカラーを変調します。重力ポテンシャル（重力ウェル）の急激な深化に伴う「全軌道の急激な収縮・捕獲」および「ポテンシャル消失に伴う軌道脱出」を比較解析してください。"
+            data-help-pro-en="[PRIMARY MASS SCALAR MUTATOR: GRAVITATIONAL WELL DEPTH] Overwrites the static mass scalar assigned to the primary node (Index 0). Analyze the rapid orbital collapse during potential well deepening versus system wide escape trajectories upon potential depletion.">
+         <label style="width: 125px !important; flex: none !important; margin: 0; display: inline-block;"><span data-en="Sun Mass:" data-ja="太陽質量:">太陽質量:</span></label>
+         <input id="sunMass" type="range" min="10" max="5000" value="2000" style="width: 80px !important; min-width: 80px !important; max-width: 80px !important; flex: none !important;">
+         <input id="sunMassInput" type="number" min="10" max="5000" value="2000" style="width: 55px !important; height: 24px !important; flex: none !important; box-sizing: border-box;">
+       </div>
+
+       <!-- 太陽 初期速度 (X) -->
+       <div class="speed-control-line"
+            data-help-kids-ja="【観察ポイント：太陽を「横」に爆走させたときの「追尾運動」】中心にある太陽に横方向のスピードを与えます。太陽が動くことで、周りの惑星たちが太陽の重力に必死にしがみつきながら「竜巻の尻尾のように追いかけてくる現象」を観察してみてください。"
+            data-help-kids-en="[OBSERVATION POINT: HORIZONTAL SUN MOTION & TRAILING ORBITS] Injects horizontal speed to the central Sun. Watch how the orbiting planets cling to the Sun's moving gravity well, trailing behind it like a cosmic comet tail!"
+            data-help-pro-ja="【主ノード水平初速インパルス：参照系運動と重心移動ベクトル】ローカルX軸マッピングにおける主天体の初期線形速度ベクトルを変調します。重心移動に伴う「慣性系からの相対運動の偏位」および「随伴天体群の追尾・潮汐引裂効果」を比較解析してください。"
+            data-help-pro-en="[PRIMARY HORIZONTAL IMPULSE: BARYCENTER TRANSLATION] Injects an initial linear velocity vector component along the local X-axis. Analyze the relative motion offset from the inertial reference frame and the trailing tidal disruption exerted on orbiting sub-nodes.">
+         <label style="width: 125px !important; flex: none !important; margin: 0; display: inline-block;"><span data-en="Sun Velocity (X):" data-ja="太陽 初期速度 (X):">太陽 初期速度 (X):</span></label>
+         <input type="range" id="sunVxSlider" min="-50" max="50" step="0.1" value="0" style="width: 80px !important; min-width: 80px !important; max-width: 80px !important; flex: none !important;">
+         <input type="number" id="sunVxInput" step="0.1" value="0" style="width: 55px !important; height: 24px !important; flex: none !important; box-sizing: border-box;">
+       </div>
+
+       <!-- 太陽 初期速度 (Y) -->
+       <div class="speed-control-line"
+            data-help-kids-ja="【観察ポイント：太陽を「縦」に爆走させたときの「追尾運動」】中心にある太陽に縦方向のスピードを与えます。太陽が上下に突っ走ったとき、周りの星たちが置き去りにされず「太陽を追いかけて移動する巨大な流星群」のようになるか試してみてください。"
+            data-help-kids-en="[OBSERVATION POINT: VERTICAL SUN MOTION & SWARM TRAILING] Injects vertical speed to the central Sun. Test whether the orbiting stars can keep up with the Sun's vertical dash or get stripped away into space as it moves!"
+            data-help-pro-ja="【主ノード垂直初速インパルス：Y軸並進運動と空間的慣性摩擦】ローカルY軸マッピングにおける主天体の初期線形速度ベクトルを変調します。Y軸方向への重心並進に伴う「重力バインド限界（捕獲の閾値）」および「後方への軌道要素引きずり現象」を比較解析してください。"
+            data-help-pro-en="[PRIMARY VERTICAL IMPULSE: TRANSLATIONAL DRIFT & BINDING] Injects an initial linear velocity vector component along the local Y-axis. Analyze the gravitational binding threshold during high-speed vertical translation and the resulting trailing orbital deformation.">
+         <label style="width: 125px !important; flex: none !important; margin: 0; display: inline-block;"><span data-en="Sun Velocity (Y):" data-ja="太陽 初期速度 (Y):">太陽 初期速度 (Y):</span></label>
+         <input type="range" id="sunVySlider" min="-50" max="50" step="0.1" value="0" style="width: 80px !important; min-width: 80px !important; max-width: 80px !important; flex: none !important;">
+         <input type="number" id="sunVyInput" step="0.1" value="0" style="width: 55px !important; height: 24px !important; flex: none !important; box-sizing: border-box;">
+       </div>
+
+       <!-- 太陽 初期速度 (Z) -->
+       <div class="speed-control-line"
+            data-help-kids-ja="【観察ポイント：太陽が「手前・奥」へ突き抜ける3Dダイナミクス】太陽に画面の奥行き方向（手前や奥）への速度を与えます。太陽が奥へ遠ざかったり手前に迫ったりするとき、星たちが引きずられて「奥行きを持った3D空間の巨大な渦」になる様子を観察してみてください。"
+            data-help-kids-en="[OBSERVATION POINT: DEPTH-AXIS SUN DRIFT & 3D VORTEX] Injects depth speed along the Z-axis (towards or away from the screen). Observe how the entire planetary system transforms into a 3D gravitational vortex as the Sun plows through space!"
+            data-help-pro-ja="【次元透過深度インパルス：Z軸深度運動と3D重力渦の形成】主天体にZ軸方向の初期深度速度ベクトル（Vz）をインジェクションします。視線方向（LOS）の移動に伴う「擬似3D射影面における重力井戸の深度変化」および「周回天体の立体立体交差ダイナミクス」を比較解析してください。"
+            data-help-pro-en="[DIMENSIONAL DEPTH IMPULSE: Z-AXIS DRIFT & 3D VORTEX] Injects an initial depth velocity vector (Vz) into the primary node. Analyze the shifting line-of-sight gravity potential and the dynamic formation of 3D orbital vortexes behind the translating primary.">
+         <label style="width: 125px !important; flex: none !important; margin: 0; display: inline-block;"><span data-en="Sun Velocity (Z):" data-ja="太陽 初期速度 (Z):">太陽 初期速度 (Z):</span></label>
+         <input type="range" id="sunVzSlider" min="-50" max="50" step="0.1" value="0" style="width: 80px !important; min-width: 80px !important; max-width: 80px !important; flex: none !important;">
+         <input type="number" id="sunVzInput" step="0.1" value="0" style="width: 55px !important; height: 24px !important; flex: none !important; box-sizing: border-box;">
+       </div>
+     </div>
+
+
+  <div class="section"
+          data-help-kids-ja="【システム自動設定：基本はそのままでOK！】宇宙が新しく生まれるときに、内部で自動的に使われる標準の星の重さです。手動で星を追加したいときは画面にある専用の「追加ボタン」を使うので、この数字は変更しなくてもそのまま楽しく遊べます。"
+          data-help-kids-en="[SYSTEM DEFAULT: NO ADJUSTMENT NEEDED] Sets the baseline mass referenced internally when spawning stars. Since manual star additions are handled via dedicated spawn buttons, you can safely leave this value at its default setting."
+          data-help-pro-ja="【内部スポナー参照用・基準質量スカラー：システム内部固定値】天体自動生成ルーチン（インナースポナー）が内部参照する静的ベース質量値（m_default）です。手動ノード注入は専用の独立コマンドボタンによって実行されるため、通常運用における動的変調は不要です。"
+          data-help-pro-en="[INTERNAL SPINNER BASE MASS: SYSTEM-REFERENCED STATIC SCALAR] Defines the default mass scalar referenced strictly by internal spawning subroutines. Dynamic parameter mutation is unnecessary during standard execution as manual node injections are dispatched via independent triggers.">
+       <div class="speed-control-line">
+         <label style="width: 125px !important; flex: none !important; margin: 0; display: inline-block;"><span data-en="Object Mass:" data-ja="生成天体の基本質量:">生成天体の基本質量:</span></label>
+         <input id="objMass" type="range" min="0.1" max="50" step="0.1" value="1.0" style="width: 80px !important; min-width: 80px !important; max-width: 80px !important; flex: none !important;">
+         <input id="objMassInput" type="number" min="0.1" max="200" step="0.1" value="1.0" style="width: 55px !important; height: 24px !important; flex: none !important; box-sizing: border-box;">
+       </div>
+     </div>
+
+
+
+    <div class="speed-control-line"
+          data-help-kids-ja="【観察ポイント：ボタン1つで変わる「星の重さルール」と「宇宙の乱れ方」】新しく生まれる星の重さを「全員おなじ（FIX：固定）」にするか、「バラバラ（RND：ランダム）」にするかを切り替えます！重さを揃えて綺麗なダンスを観察するか、バラバラにして巨大な星が小さい星を弾き飛ばす大カオスを作るか、ボタンを押して試してみてください。"
+          data-help-kids-en="[OBSERVATION POINT: FIXED MASS HARMONY VS. RANDOM MASS CHAOS] Toggles the mass rule for newly spawned stars between uniform ('FIX') and randomized ('RND'). Press to test whether all stars orbit in perfect equal-mass harmony or collide violently as supermassive giants fling tiny asteroids across the system!"
+          data-help-pro-ja="【質量割り当てアルゴリズム・トグル：同次スカラー固定と確率論的乱数サンプリング】新規天体実体化ルーチンにおける質量初期化プロトコル（固定値FIX / 閉区間擬似乱数RND）を動的切替します。「等質量系における幾何学的軌道調律」と「不均一質量分化に伴う高次重力摂動カオス」の位相空間遷移を解析してください。"
+          data-help-pro-en="[SPAWN MASS INITIALIZATION TOGGLE: UNIFORM VS. STOCHASTIC] Toggles the mass vector initialization protocol between static scalar assignment (FIX) and stochastic interval sampling (RND). Analyze the transition from equal-mass geometric orbital resonance to high-order gravitational perturbation chaos.">
+       <label style="width: 125px !important; flex: none !important; margin: 0; display: inline-block;"><span data-en="Spawn Mass Mode:" data-ja="質量適用モード:">質量適用モード:</span></label>
+       <button id="useFixedObjMassBtn" type="button" class="toggle-off" style="width: 65px !important; height: 24px !important; line-height: 22px; padding: 0; flex: none !important; box-sizing: border-box;" data-en="RND" data-ja="ランダム" data-alt-en="FIX" data-alt-ja="固定">RND</button>
+       <div class="circuit-filler" id="massStatusIndicator" style="height: 24px !important; line-height: 22px; box-sizing: border-box; margin-left: 6px;">M-FIX</div>
+     </div>
+
+    <div class="speed-control-line"
+          data-help-kids-ja="【観察ポイント：基本はそのままでOK！「超早送りタイムラプス」と「ゆっくり観察」】一番きれいに動くように「10倍」にセットしてあります！基本はそのままで大丈夫ですが、30倍にして「数千年の宇宙の歴史を超早送りで見届ける」か、1倍にして「衝突の瞬間をゆっくりじっくり観察する」ときに数値を変更してみてください。"
+          data-help-kids-en="[OBSERVATION POINT: TIMELAPSE SPEED VS. SLOW-MOTION] Pre-set to 10x for the smoothest performance! Leave at default for general observation, or crank it up to 30x to fast-forward through thousands of years of cosmic evolution in seconds, or drop to 1x to inspect close collisions in slow-motion."
+          data-help-pro-ja="【時間軸デルタタイム変調器：初期値10xにて積分精度とFPS至適化済み】物理演算ループのタイムステップ（dt）に乗算するスカラー係数です。初期値（10x）で時間積分制度と描画スループットの均衡が完了しているため通常は変更不要です。値を引き上げることで「長期軌道摂動の超高速タイムラプス解析」が可能となります。"
+          data-help-pro-en="[DYNAMIC TIME-STEP SCALAR MUTATOR: OPTIMIZED AT 10x] Modifies the delta-time (dt) multiplier applied to integration loops. Defaults (10x) are pre-calibrated for optimal numerical precision and frame throughput. Escalating the scalar enables ultra-high-speed timelapse analysis of long-term orbital decay.">
+       <label style="width: 125px !important; flex: none !important; margin: 0; display: inline-block;"><span data-en="Simulation Speed:" data-ja="時間進行速度:">時間進行速度:</span></label>
+       <input type="range" id="speedSlider" min="1" max="30" step="1" value="10" style="width: 80px !important; min-width: 80px !important; max-width: 80px !important; flex: none !important;">
+       <input type="number" id="speedInput" min="1" max="30" step="1" value="10" style="width: 55px !important; height: 24px !important; flex: none !important; box-sizing: border-box;">
+     </div>
+
+     <div class="section" style="display: flex; flex-direction: row; gap: 10px;"
+          data-help-kids-ja="宇宙のリアルタイムデータ表示：動いているすべての星の状態をリアルタイムでまとめて表示する案内盤です。"
+          data-help-kids-en="REAL-TIME TELEMETRY PANEL: Continuously monitors the status of all stars in the universe."
+          data-help-pro-ja="リアルタイム・マルチタスク・テレメトリ計器盤：多体多層マトリクスの全状態ベクトルを常時サンプリングし、一元監視する中央管制コンソールです。"
+          data-help-pro-en="REAL-TIME MULTI-BODY TELEMETRY STREAM: Continuously samples and synchronizes the complete state vectors of the dynamic N-body matrices.">
+       <div id="bodyCountDisplay" style="color:white; font-size:12px;">Sun: 0 / Obj: 0 / Comet: 0</div>
+       <div id="turnCountDisplay" style="color:white; font-size:12px;">Turn: 0</div>
+       <div id="barycenterNameDisplay" style="color:#00ffcc; font-size:12px;">Barycenter: -</div>
+       <div id="barycenterPosDisplay" style="color:#a3ffee; font-size:12px;">Barycenter Pos: -</div>
+       <div id="barycenterMassDisplay" style="color:#ff99cc; font-size:12px;">Barycenter Mass: -</div>
+       <div id="sunSpeedDisplay" style="color:white; font-size:12px;">Sun Speed: 0</div>
+       <div>Alive: <span id="statAlive">0</span></div>
+       <div>Escaped: <span id="statEscaped" style="color: #ffaa00;">0</span></div>
+       <div>Collided: <span id="statCollided" style="color: #ff4444;">0</span></div>
+       <div>Removed: <span id="statRemoved" style="color: #888888;">0</span></div>
+       <div>NaN: <span id="statNaN" style="color: #ff00ff; font-weight: bold;">0</span></div>
+     </div>
+
+     <div class="monitor-stream-block" style="display: flex; flex-direction: column; gap: 6px; width: 100%; box-sizing: border-box;">
+       <div class="speed-control-line"
+            data-help-kids-ja="宇宙年齢の表示：この宇宙が始まってから、シミュレーションの中でどれくらいの時間がすぎたかを表す時計です。"
+            data-help-kids-en="COSMIC AGE DISPLAY: A clock that shows how much time has passed inside the simulation since the universe was created."
+            data-help-pro-ja="時間軸累積インテグレーター：物理演算の開始時点をエポック（ゼロ）とし、メインループ内で執行された全フレームの瞬時デルタタイムを動的に加算・積分した時間軸累積インジケーターです。"
+            data-help-pro-en="CUMULATIVE TEMPORAL INTEGRATOR: A runtime epoch indexer that calculates the absolute temporal duration since instantiation or reset routines.">
+         <label style="width: auto; min-width: 90px;"><span data-en="Cosmic Age:" data-ja="宇宙年齢:">宇宙年齢:</span></label>
+         <div id="statSimTime" style="flex: 1; font-family: 'Consolas', monospace; color: #00ffff !important; font-weight: bold; text-shadow: 0 0 4px rgba(0,255,255,0.6); font-size: 11px; text-align: left; padding-left: 8px;">AGE: 0000 Yr, 00 Mo, 00 Day [0.0s]</div>
+         <div class="circuit-filler">TIME</div>
+       </div>
+
+       <div class="speed-control-line"
+            data-help-kids-ja="プログラム稼働時間の表示：このシミュレーターが起動してから、現実の世界でどれだけの時間がすぎたかを表示するストップウォッチです。"
+            data-help-kids-en="ENGINE RUNTIME ACCUMULATOR: A stopwatch that tracks the actual time passed in the real world since the simulator started running."
+            data-help-pro-ja="実行コンテキスト実稼働タイマー：スクリプト初期化およびメインスレッド執行開始の瞬間を基準点とし、高精度リアルタイムクロックから取得された現実世界での累積経過時間を出力します。"
+            data-help-pro-en="EXECUTIVE CONTEXT REAL-TIME CLOCK: An uptime monitor that captures the absolute real-world elapsed duration since initial script execution.">
+         <label style="width: auto; min-width: 90px;"><span data-en="Engine Runtime:" data-ja="稼働時間:">稼働時間:</span></label>
+         <div id="statRunTime" style="flex: 1; font-family: 'Consolas', monospace; color: #ffaa00 !important; font-weight: bold; text-shadow: 0 0 4px rgba(255,170,0,0.6); font-size: 11px; text-align: left; padding-left: 8px;">RUN: 00:00.0</div>
+         <div class="circuit-filler">CORE</div>
+       </div>
+
+       <div class="speed-control-line"
+            data-help-kids-ja="現実時刻の表示：あなたが今生活している、現実世界の現在の時間をそのまま表示するデジタル時計です。"
+            data-help-kids-en="CURRENT TIME INDICATOR: A digital clock that displays the exact current time in the real world."
+            data-help-pro-ja="システムローカルクロック同期器：ホストOSのシステム環境から現在時刻オブジェクトを毎秒抽出し、現実世界の実時間を同期出力します。"
+            data-help-pro-en="SYSTEM LOCAL CLOCK SYNCHRONIZER: Periodically queries the host operating system's internal wall-clock to stream the current real-world timestamp.">
+         <label style="width: auto; min-width: 90px;"><span data-en="Real Time:" data-ja="現実時刻:">現実時刻:</span></label>
+         <div id="statRealTime" style="flex: 1; font-family: 'Consolas', monospace; color: #00ff00 !important; font-weight: bold; text-shadow: 0 0 4px rgba(0,255,0,0.6); font-size: 11px; text-align: left; padding-left: 8px;">REAL: 00:00:00</div>
+         <div class="circuit-filler">WALL</div>
+       </div>
+     </div>
+
+     <button id="copyTelemetryBtn" type="button" class="toggle-off" data-en="COPY" data-ja="コピー"
+             data-help-kids-ja="数値データのコピー機能：今動いているすべての星の位置や重さ、速度などの数値を1つのテキストデータにまとめてクリップボードに記録します。"
+             data-help-kids-en="TELEMETRY DATA COPIER: Compiles the live numerical data—coordinates, weights, and speeds of all stars—into a text format and copies it to your clipboard."
+             data-help-pro-ja="状態ベクトル数値テキスト出力トリガー：現フレームにおける全天体インスタンスの多次元状態ベクトルをサンプリングし、クリップボードバッファへ転送します。"
+             data-help-pro-en="STATE VECTOR TEXT EXPORTER: Samples and serializes the dynamic state vectors of all active nodes into a plain text stream.">COPY</button>
+
+     <div class="speed-control-line"
+          data-help-kids-ja="データの保存と復元機能（セーブ＆ロード）：今の宇宙の状態を、3つの記録場所（スロット0・1・2）に保存したり、そこから元の状態に復元したりできます。"
+          data-help-kids-en="DATA PERSISTENCE SYSTEM (SAVE & LOAD): Saves the current state of the universe into three memory slots [0, 1, 2] and restores it at any time."
+          data-help-pro-ja="状態マトリクス永続化モジュール：現フレームにおける全天体オブジェクトの配列構造データを、内部メモリのスロット［0・1・2］へ即時退避（SAVE）、または復元（LOAD）します。"
+          data-help-pro-en="STATE MATRIX PERSISTENCE MODULE: Commits or recalls the dynamic array structures of all active nodes to localized memory buffers [0-2].">
+       <label style="width: auto; min-width: 90px;"><span data-en="Memory Core:" data-ja="時空記録コア:">時空記録コア:</span></label>
+       <div style="display: flex; flex: 1; gap: 8px; justify-content: flex-start; align-items: center; padding-left: 8px;">
+         <span style="color: #55ffdd; font-family: monospace; font-size: 10px;">[0]</span>
+         <button onclick="saveUniverse(0)" style="height: 20px; line-height: 16px; padding: 0 6px; font-size: 9px; background: linear-gradient(180deg, #5c3311 0%, #2b1704 100%) !important; border-color: #aa5511 !important; color: #ffaa44 !important;">SAVE</button>
+         <button onclick="loadUniverse(0)" style="height: 20px; line-height: 16px; padding: 0 6px; font-size: 9px;">LOAD</button>
+         <div class="split-bar" style="color: #444; padding: 0 2px;">|</div>
+         <span style="color: #55ffdd; font-family: monospace; font-size: 10px;">[1]</span>
+         <button onclick="saveUniverse(1)" style="height: 20px; line-height: 16px; padding: 0 6px; font-size: 9px; background: linear-gradient(180deg, #5c3311 0%, #2b1704 100%) !important; border-color: #aa5511 !important; color: #ffaa44 !important;">SAVE</button>
+         <button onclick="loadUniverse(1)" style="height: 20px; line-height: 16px; padding: 0 6px; font-size: 9px;">LOAD</button>
+         <div class="split-bar" style="color: #444; padding: 0 2px;">|</div>
+         <span style="color: #55ffdd; font-family: monospace; font-size: 10px;">[2]</span>
+         <button onclick="saveUniverse(2)" style="height: 20px; line-height: 16px; padding: 0 6px; font-size: 9px; background: linear-gradient(180deg, #5c3311 0%, #2b1704 100%) !important; border-color: #aa5511 !important; color: #ffaa44 !important;">SAVE</button>
+         <button onclick="loadUniverse(2)" style="height: 20px; line-height: 16px; padding: 0 6px; font-size: 9px;">LOAD</button>
+       </div>
+       <div class="circuit-filler">MEM</div>
+     </div>
+
+     <div class="speed-control-line"
+          data-help-kids-ja="システム自己診断機能：プログラムと画面のボタンや入力欄が、正しくつながっているかをテストするボタンです。"
+          data-help-kids-en="SYSTEM DIAGNOSIS ENGINE: Tests the connection between the background script and the interface elements."
+          data-help-pro-ja="UI接続性およびコンソールI/O診断器：開発者コンソールへの標準出力の疎通テスト、および内部マッピング配列に基づいたID開通チェックを一斉執行します。"
+          data-help-pro-en="UI CONNECTIVITY & CONSOLE I/O INSPECTOR: Executes a communication test for standard outputs to the developer console.">
+       <label><span data-en="System Diagnosis:" data-ja="システム自己診断:">システム自己診断:</span></label>
+       <button id="consoleTestBtn" type="button" class="toggle-off" style="width: 65px !important; height: 24px; line-height: 18px; padding: 0;" data-en="DIAG" data-ja="自己診断">DIAG</button>
+       <div class="circuit-filler" id="diagStatusIndicator">READY</div>
+     </div>
+
+   </div> <!-- /#settingsPanel -->
+</div> <!-- /#topBar -->
+
+<canvas id="canvas"></canvas>
+<div id="lastUpdatedBottom" class="updated" style="position:fixed; bottom:10px; left:10px;"></div>
+
+<script src="orbit3d_Va4.js" defer></script>
+
+<script>
+// =========================================================================
+// 🌐 【4次元完全統合版】日英×階層一括言語・モード切り替えサブシステム
+// =========================================================================
+window.currentLang = 'en';
+
+if (typeof simulationState === 'undefined') window.simulationState = { ui: {} };
+if (!simulationState.ui.hasOwnProperty("helpMode")) {
+     simulationState.ui.helpMode = "kids";
+}
+
+function getActiveHelpText(el) {
+     if (!el) return "";
+     const mode = simulationState.ui.helpMode;
+     const lang = window.currentLang;
+     const targetAttr = `data-help-${mode}-${lang}`;
+     let txt = el.getAttribute(targetAttr);
+     if (!txt) {
+         txt = el.getAttribute(`data-help-${lang}`) ||
+               el.getAttribute(`data-help-pro-${lang}`) ||
+               el.getAttribute(`data-help-kids-${lang}`);
+     }
+     return txt || "";
+}
+
+function initLangDataHelp() {
+     document.querySelectorAll('[data-help-kids-ja], [data-help-pro-ja], [data-help-en], [data-help-ja]').forEach(el => {
+         const initialHelp = getActiveHelpText(el);
+         if (initialHelp) el.setAttribute('data-help', initialHelp);
+     });
+}
+
+function updateHelpButtonText() {
+     const helpModeBtn = document.getElementById('helpModeBtn');
+     if (!helpModeBtn) return;
+     const mode = simulationState.ui.helpMode;
+     const lang = window.currentLang;
+     if (lang === 'en') {
+         helpModeBtn.innerText = (mode === 'pro') ? "HELP: PRO" : "HELP: KIDS";
+     } else {
+         helpModeBtn.innerText = (mode === 'pro') ? "HELP: プロ" : "HELP: こども";
+     }
+}
+
+function refreshControlPanelDOM() {
+     document.querySelectorAll('[data-en][data-ja]').forEach(el => {
+         if (el.tagName === 'BUTTON' || el.tagName === 'SPAN' || el.tagName === 'OPTION') {
+             const targetText = el.getAttribute(`data-${window.currentLang}`);
+             if (targetText) el.textContent = targetText;
+         }
+     });
+
+     document.querySelectorAll('label [data-en][data-ja]').forEach(el => {
+         const targetText = el.getAttribute(`data-${window.currentLang}`);
+         if (targetText) el.textContent = targetText;
+     });
+
+     updateHelpButtonText();
+
+     document.querySelectorAll('[data-help-kids-ja], [data-help-pro-ja], [data-help-en], [data-help-ja]').forEach(el => {
+         const newHelp = getActiveHelpText(el);
+         if (newHelp) el.setAttribute('data-help', newHelp);
+     });
+
+     const helpTextEl = document.getElementById("helpText");
+     if (helpTextEl) {
+         const newHelpDefault = getActiveHelpText(helpTextEl);
+         if (newHelpDefault) helpTextEl.textContent = newHelpDefault;
+     }
+}
+
+const toggleLangBtnEl = document.getElementById('toggleLangBtn');
+if (toggleLangBtnEl) {
+     toggleLangBtnEl.addEventListener('click', () => {
+         window.currentLang = (window.currentLang === 'en') ? 'ja' : 'en';
+         toggleLangBtnEl.textContent = `Language: ${window.currentLang.toUpperCase()}`;
+         refreshControlPanelDOM();
+     });
+}
+
+const helpModeBtn = document.getElementById('helpModeBtn');
+if (helpModeBtn) {
+     updateHelpButtonText();
+     helpModeBtn.classList.toggle("toggle-on", simulationState.ui.helpMode === "pro");
+     helpModeBtn.classList.toggle("toggle-off", simulationState.ui.helpMode === "kids");
+
+     helpModeBtn.addEventListener('click', () => {
+         simulationState.ui.helpMode = (simulationState.ui.helpMode === "kids") ? "pro" : "kids";
+         helpModeBtn.classList.toggle("toggle-on", simulationState.ui.helpMode === "pro");
+         helpModeBtn.classList.toggle("toggle-off", simulationState.ui.helpMode === "kids");
+         refreshControlPanelDOM();
+     });
+}
+
+if (document.readyState === 'loading') {
+     document.addEventListener('DOMContentLoaded', initLangDataHelp);
+} else {
+     initLangDataHelp();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+     const toggleButtons = [
+         document.getElementById("toggleBaryBtn"),
+         document.getElementById("toggle-momentum-btn")
+     ];
+
+     toggleButtons.forEach(btn => {
+         if (btn) {
+             btn.addEventListener("click", () => {
+                 btn.classList.toggle("active");
+             });
+         }
+     });
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+     const presetButtons = [
+         document.getElementById("preset1Btn"),
+         document.getElementById("preset2Btn"),
+         document.getElementById("preset3Btn"),
+         document.getElementById("preset4Btn"),
+         document.getElementById("btnOrbitCam")
+     ];
+
+     presetButtons.forEach(btn => {
+         if (btn) {
+             btn.addEventListener("click", () => {
+                 presetButtons.forEach(b => { if (b) b.classList.remove("active", "toggle-on"); });
+                 btn.classList.add("active");
+             });
+         }
+     });
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+     const camButtons = [
+         document.getElementById("camEquatorBtn"),
+         document.getElementById("camPolarBtn"),
+         document.getElementById("camOverviewBtn")
+     ];
+
+     camButtons.forEach(btn => {
+         if (btn) {
+             btn.addEventListener("click", () => {
+                 camButtons.forEach(b => { if (b) b.classList.remove("active", "toggle-on"); });
+                 btn.classList.add("active");
+             });
+         }
+     });
+});
+
+const toggleSettingsBtn = document.getElementById("toggleSettingsBtn");
+const settingsPanel = document.getElementById("settingsPanel");
+
+const fixedMassBtn = document.getElementById("useFixedObjMassBtn");
+if (fixedMassBtn) {
+     fixedMassBtn.onclick = function() {
+         this.classList.toggle("toggle-on");
+         this.classList.toggle("toggle-off");
+     };
+}
+
+if (toggleSettingsBtn && settingsPanel) {
+   let currentStage = parseInt(toggleSettingsBtn.getAttribute("data-stage") || "0", 10);
+   settingsPanel.setAttribute("data-stage", currentStage);
+
+   toggleSettingsBtn.addEventListener("click", () => {
+     currentStage = (currentStage + 1) % 3;
+
+     settingsPanel.setAttribute("data-stage", currentStage);
+     toggleSettingsBtn.setAttribute("data-stage", currentStage);
+
+     if (currentStage === 0) {
+       toggleSettingsBtn.setAttribute("data-en", "SYS: OFF");
+       toggleSettingsBtn.setAttribute("data-ja", "システム: 全閉");
+     } else if (currentStage === 1) {
+       toggleSettingsBtn.setAttribute("data-en", "SYS: SET1");
+       toggleSettingsBtn.setAttribute("data-ja", "システム: 基本設定");
+     } else if (currentStage === 2) {
+       toggleSettingsBtn.setAttribute("data-en", "SYS: SET2");
+       toggleSettingsBtn.setAttribute("data-ja", "システム: 特権演算");
+     }
+
+     const targetText = toggleSettingsBtn.getAttribute(`data-${window.currentLang}`);
+     if (targetText) toggleSettingsBtn.textContent = targetText;
+
+     adjustCanvasMargin();
+   });
+}
+
+/* 👑【完全補元・全次元自動検知版】Dynamic Guidance Monitor Script */
+document.addEventListener("DOMContentLoaded", () => {
+   const helpTextEl = document.getElementById("helpText");
+
+   // data-help から始まる属性を持つすべての要素を漏れなくキャッチ！
+   document.querySelectorAll("[data-help-kids-ja], [data-help-kids-en], [data-help-pro-ja], [data-help-pro-en], [data-help-en], [data-help-ja], [data-help]").forEach(el => {
+     el.addEventListener("mouseenter", () => {
+       // 動的に現在の言語×モードに応じたテキストを取得
+       const msg = getActiveHelpText(el) || el.getAttribute("data-help");
+       if (msg && helpTextEl) helpTextEl.textContent = msg;
+     });
+     el.addEventListener("mouseleave", () => {
+       if (helpTextEl) {
+         const defaultMsg = getActiveHelpText(helpTextEl);
+         if (defaultMsg) helpTextEl.textContent = defaultMsg;
+       }
+     });
+   });
+});
+
+function formatDate(d) {
+   const y = d.getFullYear();
+   const m = String(d.getMonth() + 1).padStart(2, "0");
+   const day = String(d.getDate()).padStart(2, "0");
+   const h = String(d.getHours()).padStart(2, "0");
+   const min = String(d.getMinutes()).padStart(2, "0");
+   return `${y}/${m}/${day} ${h}:${min}`;
+}
+
+const now = new Date();
+const text = "LAST UPDATE: " + formatDate(now);
+
+const bottomEl = document.getElementById("lastUpdatedBottom");
+if (bottomEl) bottomEl.textContent = text;
+
+document.addEventListener("DOMContentLoaded", () => {
+   const eqBtn = document.getElementById("camEquatorBtn");
+   const plBtn = document.getElementById("camPolarBtn");
+   const ovBtn = document.getElementById("camOverviewBtn");
+
+   if (eqBtn) eqBtn.addEventListener("click", () => typeof applyCameraPreset === 'function' && applyCameraPreset('equator'));
+   if (plBtn) plBtn.addEventListener("click", () => typeof applyCameraPreset === 'function' && applyCameraPreset('polar'));
+   if (ovBtn) ovBtn.addEventListener("click", () => typeof applyCameraPreset === 'function' && applyCameraPreset('overview'));
+});
+
+function adjustCanvasMargin() {
+   const bar = document.getElementById("topBar");
+   const canvas = document.getElementById("canvas");
+   if (bar && canvas) {
+     canvas.style.paddingTop = bar.offsetHeight + "px";
+   }
+}
+
+window.addEventListener("resize", adjustCanvasMargin);
+</script>
+</body>
+</html>
